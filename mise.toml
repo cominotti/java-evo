@@ -1,0 +1,3 @@
+[tools]
+java = "25"
+"asdf:mise-plugins/mise-maven" = "3.9.12"
