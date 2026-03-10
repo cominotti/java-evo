@@ -1,6 +1,7 @@
 package dev.cominotti.java.evo.rest;
 
 import jakarta.json.bind.JsonbException;
+import jakarta.ws.rs.ProcessingException;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -12,9 +13,10 @@ class EvoJsonbExceptionMapperTest {
     @Test
     void evoValidationFailureReturnsBadRequestWithFieldError() {
         var iae = new IllegalArgumentException("Email must be a valid email address");
-        var jsonbEx = new JsonbException("Error deserializing object at property 'email'", iae);
+        var jsonbEx = new JsonbException("Unable to deserialize property 'email' because of: ...", iae);
+        var processingEx = new ProcessingException(jsonbEx);
 
-        var response = mapper.toResponse(jsonbEx);
+        var response = mapper.toResponse(processingEx);
         var body = (ValidationProblem) response.getEntity();
 
         assertThat(response.getStatus()).isEqualTo(400);
@@ -26,12 +28,14 @@ class EvoJsonbExceptionMapperTest {
 
     @Test
     void extractsFieldNameFromYassonWrappedCauseChain() {
-        // Yasson wraps: JsonbException → InvocationTargetException → IllegalArgumentException
+        // Real Yasson chain: ProcessingException → JsonbException → JsonbException → IAE
         var iae = new IllegalArgumentException("must not be blank");
-        var ite = new java.lang.reflect.InvocationTargetException(iae);
-        var jsonbEx = new JsonbException("Error deserializing object at property 'name'", ite);
+        var innerJsonb = new JsonbException("adapter error", iae);
+        var outerJsonb = new JsonbException(
+                "Unable to deserialize property 'name' because of: adapter error", innerJsonb);
+        var processingEx = new ProcessingException(outerJsonb);
 
-        var response = mapper.toResponse(jsonbEx);
+        var response = mapper.toResponse(processingEx);
         var body = (ValidationProblem) response.getEntity();
 
         assertThat(body.errors().getFirst().field()).isEqualTo("name");
@@ -42,8 +46,9 @@ class EvoJsonbExceptionMapperTest {
     void unknownFieldNameWhenMessageLacksPropertyInfo() {
         var iae = new IllegalArgumentException("invalid");
         var jsonbEx = new JsonbException("Some other error", iae);
+        var processingEx = new ProcessingException(jsonbEx);
 
-        var response = mapper.toResponse(jsonbEx);
+        var response = mapper.toResponse(processingEx);
         var body = (ValidationProblem) response.getEntity();
 
         assertThat(body.errors().getFirst().field()).isEqualTo("unknown");
@@ -51,10 +56,10 @@ class EvoJsonbExceptionMapperTest {
     }
 
     @Test
-    void nonEvoJsonbExceptionReturnsGenericBadRequest() {
-        var jsonbEx = new JsonbException("Unexpected end of input");
+    void nonEvoProcessingExceptionReturnsGenericBadRequest() {
+        var processingEx = new ProcessingException("Unexpected end of input");
 
-        var response = mapper.toResponse(jsonbEx);
+        var response = mapper.toResponse(processingEx);
         var body = (ValidationProblem) response.getEntity();
 
         assertThat(response.getStatus()).isEqualTo(400);
@@ -66,7 +71,7 @@ class EvoJsonbExceptionMapperTest {
     @Test
     void extractFieldNameParsesYassonFormat() {
         assertThat(EvoJsonbExceptionMapper.extractFieldName(
-                "Error deserializing object at property 'email'")).isEqualTo("email");
+                "Unable to deserialize property 'email' because of: ...")).isEqualTo("email");
         assertThat(EvoJsonbExceptionMapper.extractFieldName(
                 "Error at property 'contact'")).isEqualTo("contact");
         assertThat(EvoJsonbExceptionMapper.extractFieldName(

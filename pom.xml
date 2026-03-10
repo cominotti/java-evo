@@ -61,6 +61,7 @@
         <module>evo-jackson</module>
         <module>evo-jsonb</module>
         <module>evo-rest</module>
-        <module>evo-example</module>
+        <module>evo-spring-example</module>
+        <module>evo-jakarta-example</module>
     </modules>
 </project>

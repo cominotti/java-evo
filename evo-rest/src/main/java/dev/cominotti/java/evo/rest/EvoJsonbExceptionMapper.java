@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 import jakarta.json.bind.JsonbException;
+import jakarta.ws.rs.ProcessingException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.ExceptionMapper;
@@ -14,8 +15,16 @@ import jakarta.ws.rs.ext.Provider;
  *
  * <p>When an invalid JSON string is deserialized into an EVO, the record's compact
  * constructor throws {@link IllegalArgumentException}. JSON-B (Yasson) wraps this as
- * a {@link JsonbException}. This mapper extracts the original validation message from
- * the cause chain and returns a {@link ValidationProblem} response.</p>
+ * a {@link JsonbException}, and Jersey further wraps it as a {@link ProcessingException}
+ * (because the exception originates in a {@code MessageBodyReader}). This mapper handles
+ * the outer {@code ProcessingException} and walks the cause chain to find the EVO
+ * validation message.</p>
+ *
+ * <h3>Exception chain</h3>
+ *
+ * <p>{@code ProcessingException} → {@code JsonbException} (Yasson context) →
+ * {@code JsonbException} (adapter wrapping) → {@code IllegalArgumentException}
+ * (the EVO validation error from {@code EvoValidation.validate()}).</p>
  *
  * <h3>Field name extraction</h3>
  *
@@ -37,17 +46,20 @@ import jakarta.ws.rs.ext.Provider;
  * </ul>
  */
 @Provider
-public class EvoJsonbExceptionMapper implements ExceptionMapper<JsonbException> {
+public class EvoJsonbExceptionMapper implements ExceptionMapper<ProcessingException> {
 
     /** Matches Yasson's message format: "...property 'fieldName'" */
     private static final Pattern YASSON_PROPERTY_PATTERN =
             Pattern.compile("property '([^']+)'");
 
     @Override
-    public Response toResponse(JsonbException exception) {
-        var iae = findIllegalArgumentException(exception);
+    public Response toResponse(ProcessingException exception) {
+        var iae = findInCauseChain(exception, IllegalArgumentException.class);
         if (iae != null) {
-            var fieldName = extractFieldName(exception.getMessage());
+            var jsonbEx = findInCauseChain(exception, JsonbException.class);
+            var fieldName = jsonbEx != null
+                    ? extractFieldName(jsonbEx.getMessage())
+                    : "unknown";
             var error = new ValidationProblem.FieldError(fieldName, iae.getMessage());
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(ValidationProblem.of(List.of(error)))
@@ -55,7 +67,7 @@ public class EvoJsonbExceptionMapper implements ExceptionMapper<JsonbException> 
                     .build();
         }
 
-        // Not an EVO validation error — generic JSON parse failure.
+        // Not an EVO validation error — generic processing failure.
         var problem = new ValidationProblem("Bad Request", 400,
                 "Failed to read request", List.of());
         return Response.status(Response.Status.BAD_REQUEST)
@@ -65,15 +77,14 @@ public class EvoJsonbExceptionMapper implements ExceptionMapper<JsonbException> 
     }
 
     /**
-     * Walks the full cause chain looking for an {@link IllegalArgumentException}.
-     * Yasson may wrap with {@link java.lang.reflect.InvocationTargetException} between
-     * the {@code JsonbException} and the IAE, so we check beyond just {@code getCause()}.
+     * Walks the full cause chain looking for an exception of the given type.
      */
-    private static IllegalArgumentException findIllegalArgumentException(Throwable t) {
-        var current = t.getCause();
+    @SuppressWarnings("unchecked")
+    private static <T extends Throwable> T findInCauseChain(Throwable t, Class<T> type) {
+        var current = t;
         while (current != null) {
-            if (current instanceof IllegalArgumentException iae) {
-                return iae;
+            if (type.isInstance(current)) {
+                return (T) current;
             }
             current = current.getCause();
         }

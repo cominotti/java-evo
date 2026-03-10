@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>dev.cominotti.java.evo</groupId>
+        <artifactId>java-evo</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>evo-jakarta-example</artifactId>
+    <name>evo-jakarta-example</name>
+    <description>Enterprise Value Objects — Jakarta REST + JSON-B standalone example (no Spring)</description>
+
+    <dependencies>
+        <!-- EVO modules -->
+        <dependency>
+            <groupId>dev.cominotti.java.evo</groupId>
+            <artifactId>evo-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.cominotti.java.evo</groupId>
+            <artifactId>evo-persistence</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.cominotti.java.evo</groupId>
+            <artifactId>evo-jsonb</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>dev.cominotti.java.evo</groupId>
+            <artifactId>evo-rest</artifactId>
+        </dependency>
+
+        <!-- Jersey (Jakarta REST implementation) + Grizzly HTTP server -->
+        <dependency>
+            <groupId>org.glassfish.jersey.containers</groupId>
+            <artifactId>jersey-container-grizzly2-http</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.media</groupId>
+            <artifactId>jersey-media-json-binding</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.ext</groupId>
+            <artifactId>jersey-bean-validation</artifactId>
+        </dependency>
+
+        <!-- JPA + Hibernate + H2 -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.hibernate.orm</groupId>
+            <artifactId>hibernate-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+        </dependency>
+
+        <!-- Test -->
+        <dependency>
+            <groupId>org.glassfish.jersey.test-framework</groupId>
+            <artifactId>jersey-test-framework-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.test-framework.providers</groupId>
+            <artifactId>jersey-test-framework-provider-grizzly2</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

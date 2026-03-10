@@ -1,0 +1,12 @@
+package dev.cominotti.java.evo.jakarta.example.greeting;
+
+import dev.cominotti.java.evo.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
+public record GreetingRequest(
+        @NotBlank @Size(max = 100) String name,
+        @NotBlank @Size(max = 500) String message,
+        Email email
+) {
+}

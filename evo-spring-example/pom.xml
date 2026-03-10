@@ -10,9 +10,9 @@
         <version>0.0.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>evo-example</artifactId>
-    <name>evo-example</name>
-    <description>Enterprise Value Objects — Spring Boot example application</description>
+    <artifactId>evo-spring-example</artifactId>
+    <name>evo-spring-example</name>
+    <description>Enterprise Value Objects — Spring Boot + Spring MVC example application</description>
 
     <dependencies>
         <dependency>
