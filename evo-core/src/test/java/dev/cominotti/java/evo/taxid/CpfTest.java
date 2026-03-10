@@ -118,8 +118,8 @@ class CpfTest {
     void equalityBasedOnValue() {
         var a = new Cpf(VALID_CPF_1);
         var b = new Cpf(VALID_CPF_1);
-        assertThat(a).isEqualTo(b);
-        assertThat(a.hashCode()).isEqualTo(b.hashCode());
+        assertThat(a).isEqualTo(b)
+                .hasSameHashCodeAs(b);
     }
 
     @Test
@@ -132,7 +132,7 @@ class CpfTest {
     @Test
     void toStringReturnsRawValue() {
         var cpf = new Cpf(VALID_CPF_1);
-        assertThat(cpf.toString()).isEqualTo(VALID_CPF_1);
+        assertThat(cpf).hasToString(VALID_CPF_1);
     }
 
     // --- parse() tests ---

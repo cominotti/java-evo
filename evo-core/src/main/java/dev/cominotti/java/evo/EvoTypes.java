@@ -68,11 +68,11 @@ public final class EvoTypes {
             if (e.getCause() instanceof IllegalArgumentException iae) {
                 throw iae;
             }
-            throw new RuntimeException(
+            throw new IllegalStateException(
                     "Failed to construct " + constructor.getDeclaringClass().getSimpleName()
                             + ": " + e.getCause().getMessage(), e.getCause());
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(
+            throw new IllegalStateException(
                     "Failed to construct " + constructor.getDeclaringClass().getSimpleName()
                             + ": " + e.getMessage(), e);
         }

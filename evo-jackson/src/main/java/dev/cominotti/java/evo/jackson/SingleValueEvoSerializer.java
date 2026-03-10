@@ -60,10 +60,10 @@ class SingleValueEvoSerializer extends ValueSerializerModifier {
         }
 
         @Override
-        public void serialize(Record record, JsonGenerator gen, SerializationContext ctxt)
+        public void serialize(Record evo, JsonGenerator gen, SerializationContext ctxt)
                 throws JacksonException {
             try {
-                var value = (String) component.getAccessor().invoke(record);
+                var value = (String) component.getAccessor().invoke(evo);
                 if (value == null) {
                     gen.writeNull();
                 } else {

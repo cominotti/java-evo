@@ -65,8 +65,8 @@ class GreetingResourceIntegrationTest extends JerseyTest {
 
         assertThat(response.getStatus()).isEqualTo(200);
         var body = response.readEntity(String.class);
-        assertThat(body).contains("\"name\":\"Alice\"");
-        assertThat(body).contains("\"id\":");
+        assertThat(body).contains("\"name\":\"Alice\"")
+                .contains("\"id\":");
     }
 
     @Test
@@ -110,8 +110,8 @@ class GreetingResourceIntegrationTest extends JerseyTest {
 
         assertThat(response.getStatus()).isEqualTo(400);
         var body = response.readEntity(String.class);
-        assertThat(body).contains("\"title\":\"Validation failed\"");
-        assertThat(body).contains("\"errors\"");
+        assertThat(body).contains("\"title\":\"Validation failed\"")
+                .contains("\"errors\"");
     }
 
     @Test

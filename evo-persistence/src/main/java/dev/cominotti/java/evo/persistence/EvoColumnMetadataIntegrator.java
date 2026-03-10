@@ -8,7 +8,6 @@ import org.hibernate.boot.Metadata;
 import org.hibernate.boot.spi.BootstrapContext;
 import org.hibernate.engine.spi.SessionFactoryImplementor;
 import org.hibernate.integrator.spi.Integrator;
-import org.hibernate.mapping.PersistentClass;
 import org.hibernate.mapping.Property;
 
 /**
@@ -49,7 +48,7 @@ public class EvoColumnMetadataIntegrator implements Integrator {
             Class<?> entityClass;
             try {
                 entityClass = entityBinding.getMappedClass();
-            } catch (Exception e) {
+            } catch (Exception _) {
                 continue;
             }
 
@@ -105,7 +104,7 @@ public class EvoColumnMetadataIntegrator implements Integrator {
              current = current.getSuperclass()) {
             try {
                 return current.getDeclaredField(fieldName).getType();
-            } catch (NoSuchFieldException ignored) {
+            } catch (NoSuchFieldException _) {
                 // Field not on this class — try the superclass.
             }
         }
@@ -130,7 +129,7 @@ public class EvoColumnMetadataIntegrator implements Integrator {
             if (size != null && size.max() != Integer.MAX_VALUE) {
                 return size.max();
             }
-        } catch (NoSuchFieldException ignored) {
+        } catch (NoSuchFieldException _) {
             // Sealed interface or non-standard EVO — no "value" field to inspect.
         }
         return -1;

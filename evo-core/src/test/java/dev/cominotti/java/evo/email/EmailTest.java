@@ -61,8 +61,8 @@ class EmailTest {
     void equalityBasedOnValue() {
         var a = new Email("user@example.com");
         var b = new Email("user@example.com");
-        assertThat(a).isEqualTo(b);
-        assertThat(a.hashCode()).isEqualTo(b.hashCode());
+        assertThat(a).isEqualTo(b)
+                .hasSameHashCodeAs(b);
     }
 
     @Test
@@ -75,6 +75,6 @@ class EmailTest {
     @Test
     void toStringReturnsRawValue() {
         var email = new Email("user@example.com");
-        assertThat(email.toString()).isEqualTo("user@example.com");
+        assertThat(email).hasToString("user@example.com");
     }
 }

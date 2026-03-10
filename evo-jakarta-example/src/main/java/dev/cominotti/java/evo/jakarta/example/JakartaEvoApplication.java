@@ -3,18 +3,14 @@
 package dev.cominotti.java.evo.jakarta.example;
 
 import java.net.URI;
+import java.util.logging.Logger;
 
 import dev.cominotti.java.evo.jakarta.example.greeting.GreetingRepository;
 import dev.cominotti.java.evo.jakarta.example.greeting.GreetingResource;
-import dev.cominotti.java.evo.jsonb.EvoJsonbConfig;
 import dev.cominotti.java.evo.rest.EvoConstraintViolationExceptionMapper;
 import dev.cominotti.java.evo.rest.EvoJsonbExceptionMapper;
 import dev.cominotti.java.evo.rest.EvoParamConverterProvider;
-import jakarta.json.bind.Jsonb;
-import jakarta.json.bind.JsonbBuilder;
-import jakarta.json.bind.JsonbConfig;
 import jakarta.persistence.Persistence;
-import jakarta.ws.rs.ext.ContextResolver;
 import org.glassfish.grizzly.http.server.HttpServer;
 import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.inject.hk2.AbstractBinder;
@@ -30,12 +26,15 @@ import org.glassfish.jersey.server.ResourceConfig;
  */
 public class JakartaEvoApplication {
 
+    private static final Logger LOG = Logger.getLogger(JakartaEvoApplication.class.getName());
+
     public static final String BASE_URI = "http://localhost:8081/";
 
+    @SuppressWarnings("java:S1172") // args is required by the JVM entry point contract
     public static void main(String[] args) throws Exception {
         var server = startServer();
-        System.out.println("Jakarta EVO application started at " + BASE_URI);
-        System.out.println("Press Enter to stop...");
+        LOG.info("Jakarta EVO application started at " + BASE_URI);
+        LOG.info("Press Enter to stop...");
         System.in.read();
         server.shutdown();
     }

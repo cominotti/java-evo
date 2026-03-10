@@ -153,7 +153,7 @@ class EvoValidationTest {
         try {
             var field = recordClass.getDeclaredField(componentName);
             return field.getAnnotation(annotationType);
-        } catch (NoSuchFieldException e) {
+        } catch (NoSuchFieldException _) {
             return null;
         }
     }

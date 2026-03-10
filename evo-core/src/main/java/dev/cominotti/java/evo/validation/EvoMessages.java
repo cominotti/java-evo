@@ -52,7 +52,7 @@ public final class EvoMessages {
             ResourceBundle bundle = ResourceBundle.getBundle(BUNDLE_NAME, Locale.getDefault());
             String template = bundle.getString(key);
             return args.length > 0 ? MessageFormat.format(template, args) : template;
-        } catch (MissingResourceException e) {
+        } catch (MissingResourceException _) {
             return args.length > 0 ? MessageFormat.format(messageOrKey, args) : messageOrKey;
         }
     }

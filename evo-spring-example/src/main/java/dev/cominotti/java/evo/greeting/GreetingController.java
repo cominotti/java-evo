@@ -25,7 +25,7 @@ public class GreetingController {
         return "Hello, World!";
     }
 
-    @GetMapping("/hello/{name}")
+    @GetMapping(value = "/hello/{name}", produces = "text/plain")
     public String helloName(@PathVariable String name) {
         return "Hello, " + name + "!";
     }

@@ -3,6 +3,7 @@
 package dev.cominotti.java.evo.jsonb;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.ServiceLoader;
 
 import jakarta.json.bind.JsonbConfig;
@@ -82,9 +83,7 @@ public final class EvoJsonbConfig {
         });
 
         // Add any explicitly passed adapters (test-only, unregistered, etc.)
-        for (var additional : additionalAdapters) {
-            adapters.add(additional);
-        }
+        Collections.addAll(adapters, additionalAdapters);
 
         config.withAdapters(adapters.toArray(new JsonbAdapter[0]));
         return config;

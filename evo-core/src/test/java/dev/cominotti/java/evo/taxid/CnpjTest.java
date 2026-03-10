@@ -118,8 +118,8 @@ class CnpjTest {
     void equalityBasedOnValue() {
         var a = new Cnpj(VALID_CNPJ_1);
         var b = new Cnpj(VALID_CNPJ_1);
-        assertThat(a).isEqualTo(b);
-        assertThat(a.hashCode()).isEqualTo(b.hashCode());
+        assertThat(a).isEqualTo(b)
+                .hasSameHashCodeAs(b);
     }
 
     @Test
@@ -132,7 +132,7 @@ class CnpjTest {
     @Test
     void toStringReturnsRawValue() {
         var cnpj = new Cnpj(VALID_CNPJ_1);
-        assertThat(cnpj.toString()).isEqualTo(VALID_CNPJ_1);
+        assertThat(cnpj).hasToString(VALID_CNPJ_1);
     }
 
     // --- parse() tests ---

@@ -41,11 +41,11 @@ class EvoControllerIntegrationTest {
 
         var json = objectMapper.writeValueAsString(greeting);
 
-        assertThat(json).contains("\"email\":\"alice@example.com\"");
-        assertThat(json).contains("\"authorCpf\":\"" + VALID_CPF + "\"");
-        assertThat(json).contains("\"companyCnpj\":\"" + VALID_CNPJ + "\"");
-        assertThat(json).contains("\"taxId\":\"" + VALID_CPF + "\"");
-        assertThat(json).doesNotContain("{\"value\"");
+        assertThat(json).contains("\"email\":\"alice@example.com\"")
+                .contains("\"authorCpf\":\"" + VALID_CPF + "\"")
+                .contains("\"companyCnpj\":\"" + VALID_CNPJ + "\"")
+                .contains("\"taxId\":\"" + VALID_CPF + "\"")
+                .doesNotContain("{\"value\"");
     }
 
     @Test
@@ -54,8 +54,8 @@ class EvoControllerIntegrationTest {
 
         var json = objectMapper.writeValueAsString(greeting);
 
-        assertThat(json).contains("\"email\":null");
-        assertThat(json).contains("\"taxId\":null");
+        assertThat(json).contains("\"email\":null")
+                .contains("\"taxId\":null");
     }
 
     @Test
@@ -99,8 +99,8 @@ class EvoControllerIntegrationTest {
     void evoFieldWithJsonPropertySerializesWithCustomName() {
         var request = new CustomNameRequest("Alice", new Email("alice@example.com"), null);
         var json = objectMapper.writeValueAsString(request);
-        assertThat(json).contains("\"contact_email\":\"alice@example.com\"");
-        assertThat(json).doesNotContain("\"email\":");
+        assertThat(json).contains("\"contact_email\":\"alice@example.com\"")
+                .doesNotContain("\"email\":");
     }
 
     @Test
@@ -126,7 +126,7 @@ class EvoControllerIntegrationTest {
     void nullEvoFieldWithJsonPropertySerializesAsNull() {
         var request = new CustomNameRequest("Alice", null, null);
         var json = objectMapper.writeValueAsString(request);
-        assertThat(json).contains("\"contact_email\":null");
-        assertThat(json).contains("\"tax_id\":null");
+        assertThat(json).contains("\"contact_email\":null")
+                .contains("\"tax_id\":null");
     }
 }

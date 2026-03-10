@@ -139,9 +139,9 @@ class EvoJsonbTest {
         var dto = new ContactDto("Alice", new Email("alice@example.com"), new Cpf(VALID_CPF));
         var json = jsonb.toJson(dto);
 
-        assertThat(json).contains("\"email\":\"alice@example.com\"");
-        assertThat(json).contains("\"taxId\":\"" + VALID_CPF + "\"");
-        assertThat(json).doesNotContain("{\"value\"");
+        assertThat(json).contains("\"email\":\"alice@example.com\"")
+                .contains("\"taxId\":\"" + VALID_CPF + "\"")
+                .doesNotContain("{\"value\"");
     }
 
     @Test
