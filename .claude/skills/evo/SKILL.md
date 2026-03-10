@@ -1,6 +1,6 @@
 ---
 name: evo
-description: Guide for creating, configuring, and using Enterprise Value Objects (EVOs) — DDD value types as Java Records with Jakarta Validation and Jackson support, persisted via autoApply converters and @AttributeBinderType column annotations.
+description: Guide for creating, configuring, and using Enterprise Value Objects (EVOs) — DDD value types as Java Records with Jakarta Validation, Jackson and JSON-B support, persisted via autoApply converters and @AttributeBinderType column annotations.
 ---
 
 # Enterprise Value Objects (EVOs)
@@ -196,8 +196,8 @@ Follow the existing test patterns across modules:
 - **Unit test** in `evo-core` (`PhoneTest.java`): valid/invalid construction, `parse()`, equality, toString
 - **Converter unit test** in `evo-persistence` (add to `ConverterUnitTest.java`): round-trip, null handling
 - **Validation test** in `evo-core` (add to `EvoValidationTest.java`): verify annotations exist
-- **Persistence test** in `evo-example` (add to `EvoPersistenceIntegrationTest.java`): use `@EvoColumn` on entity, save/reload
-- **Column metadata test** in `evo-example` (add to `AttributeOverrideColumnInheritanceTest.java`): verify column length via `INFORMATION_SCHEMA`
+- **Persistence test** in `evo-spring-example` (add to `EvoPersistenceIntegrationTest.java`): use `@EvoColumn` on entity, save/reload
+- **Column metadata test** in `evo-spring-example` (add to `AttributeOverrideColumnInheritanceTest.java`): verify column length via `INFORMATION_SCHEMA`
 
 ## Configuring Column Names and Constraints
 
@@ -290,7 +290,7 @@ public record CreateUserRequest(
 ### Error handling
 
 EVO deserialization errors and Jakarta Validation errors are unified into RFC 9457 `ProblemDetail`
-responses by `EvoExceptionHandler` (`@RestControllerAdvice` in `evo-example`):
+responses by `EvoExceptionHandler` (`@RestControllerAdvice` in `evo-spring-example`):
 
 ```json
 {
