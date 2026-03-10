@@ -56,6 +56,6 @@ public class EvoConstraintViolationExceptionMapper
                 .filter(node -> node.getKind() == ElementKind.PROPERTY)
                 .map(Path.Node::getName)
                 .collect(Collectors.joining("."));
-        return fieldPath.isEmpty() ? "unknown" : fieldPath;
+        return fieldPath.isEmpty() ? ValidationProblem.UNKNOWN_FIELD : fieldPath;
     }
 }

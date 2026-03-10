@@ -27,6 +27,9 @@ public record ValidationProblem(
         List<FieldError> errors
 ) {
 
+    /** Fallback field name when the actual field cannot be determined. */
+    public static final String UNKNOWN_FIELD = "unknown";
+
     public record FieldError(String field, String message) {}
 
     /**

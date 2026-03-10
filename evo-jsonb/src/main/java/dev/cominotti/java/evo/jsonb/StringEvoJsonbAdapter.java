@@ -1,8 +1,8 @@
 package dev.cominotti.java.evo.jsonb;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
+import dev.cominotti.java.evo.EvoTypes;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.adapter.JsonbAdapter;
 
@@ -51,12 +51,7 @@ public abstract class StringEvoJsonbAdapter<T> implements JsonbAdapter<T, String
      */
     protected StringEvoJsonbAdapter(EvoAccessor<T> accessor, Class<T> type) {
         this.accessor = accessor;
-        try {
-            this.constructor = type.getDeclaredConstructor(String.class);
-        } catch (NoSuchMethodException e) {
-            throw new IllegalStateException(
-                    "Record " + type.getName() + " has no canonical constructor(String)", e);
-        }
+        this.constructor = EvoTypes.canonicalStringConstructor(type);
     }
 
     @Override
@@ -68,18 +63,9 @@ public abstract class StringEvoJsonbAdapter<T> implements JsonbAdapter<T, String
     public T adaptFromJson(String value) {
         if (value == null) return null;
         try {
-            return constructor.newInstance(value);
-        } catch (InvocationTargetException e) {
-            if (e.getCause() instanceof IllegalArgumentException iae) {
-                throw new JsonbException(iae.getMessage(), iae);
-            }
-            throw new JsonbException(
-                    "Failed to construct " + constructor.getDeclaringClass().getSimpleName()
-                            + ": " + e.getCause().getMessage(), e.getCause());
-        } catch (ReflectiveOperationException e) {
-            throw new JsonbException(
-                    "Failed to construct " + constructor.getDeclaringClass().getSimpleName()
-                            + ": " + e.getMessage(), e);
+            return EvoTypes.newInstance(constructor, value);
+        } catch (IllegalArgumentException e) {
+            throw new JsonbException(e.getMessage(), e);
         }
     }
 

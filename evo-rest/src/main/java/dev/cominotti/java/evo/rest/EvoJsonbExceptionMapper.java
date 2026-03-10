@@ -33,7 +33,7 @@ import jakarta.ws.rs.ext.Provider;
  * field name is extracted via regex from Yasson's message format
  * ({@code "...property 'fieldName'"}). If the regex doesn't match (different JSON-B
  * implementation or unexpected format), the field name falls back to
- * {@code "unknown"}.</p>
+ * {@code ValidationProblem.UNKNOWN_FIELD}.</p>
  *
  * <h3>Known limitations</h3>
  *
@@ -42,7 +42,7 @@ import jakarta.ws.rs.ext.Provider;
  *       the full dotted path (e.g., {@code "email"} instead of
  *       {@code "contact.address.email"})</li>
  *   <li>Field name extraction is Yasson-specific; other JSON-B implementations
- *       may degrade to {@code "unknown"}</li>
+ *       may degrade to {@code ValidationProblem.UNKNOWN_FIELD}</li>
  * </ul>
  */
 @Provider
@@ -59,7 +59,7 @@ public class EvoJsonbExceptionMapper implements ExceptionMapper<ProcessingExcept
             var jsonbEx = findInCauseChain(exception, JsonbException.class);
             var fieldName = jsonbEx != null
                     ? extractFieldName(jsonbEx.getMessage())
-                    : "unknown";
+                    : ValidationProblem.UNKNOWN_FIELD;
             var error = new ValidationProblem.FieldError(fieldName, iae.getMessage());
             return Response.status(Response.Status.BAD_REQUEST)
                     .entity(ValidationProblem.of(List.of(error)))
@@ -93,11 +93,11 @@ public class EvoJsonbExceptionMapper implements ExceptionMapper<ProcessingExcept
 
     /**
      * Extracts the field name from Yasson's exception message using regex.
-     * Returns {@code "unknown"} if the message doesn't match the expected format.
+     * Returns {@code ValidationProblem.UNKNOWN_FIELD} if the message doesn't match the expected format.
      */
     static String extractFieldName(String message) {
-        if (message == null) return "unknown";
+        if (message == null) return ValidationProblem.UNKNOWN_FIELD;
         var matcher = YASSON_PROPERTY_PATTERN.matcher(message);
-        return matcher.find() ? matcher.group(1) : "unknown";
+        return matcher.find() ? matcher.group(1) : ValidationProblem.UNKNOWN_FIELD;
     }
 }

@@ -48,37 +48,23 @@ public class EvoParamConverterProvider implements ParamConverterProvider {
     private static class EvoRecordParamConverter<T> implements ParamConverter<T> {
 
         private final java.lang.reflect.Constructor<T> constructor;
+        private final java.lang.reflect.Method accessor;
 
         EvoRecordParamConverter(Class<T> type) {
-            try {
-                this.constructor = type.getDeclaredConstructor(String.class);
-            } catch (NoSuchMethodException e) {
-                throw new IllegalStateException(
-                        "Record " + type.getName() + " has no canonical constructor(String)", e);
-            }
+            this.constructor = EvoTypes.canonicalStringConstructor(type);
+            this.accessor = type.getRecordComponents()[0].getAccessor();
         }
 
         @Override
         public T fromString(String value) {
             if (value == null) return null;
-            try {
-                return constructor.newInstance(value);
-            } catch (java.lang.reflect.InvocationTargetException e) {
-                if (e.getCause() instanceof IllegalArgumentException iae) {
-                    throw iae;
-                }
-                throw new IllegalArgumentException(e.getCause().getMessage(), e.getCause());
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalArgumentException(e.getMessage(), e);
-            }
+            return EvoTypes.newInstance(constructor, value);
         }
 
         @Override
         public String toString(T value) {
             if (value == null) return null;
             try {
-                // Access the single record component's accessor (e.g., email.value())
-                var accessor = value.getClass().getRecordComponents()[0].getAccessor();
                 return (String) accessor.invoke(value);
             } catch (ReflectiveOperationException e) {
                 throw new IllegalArgumentException(e.getMessage(), e);

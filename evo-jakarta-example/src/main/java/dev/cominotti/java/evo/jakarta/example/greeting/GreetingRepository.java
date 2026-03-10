@@ -26,6 +26,11 @@ public class GreetingRepository {
             em.persist(greeting);
             em.getTransaction().commit();
             return greeting;
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            throw e;
         } finally {
             em.close();
         }
