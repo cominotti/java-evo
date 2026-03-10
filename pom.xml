@@ -16,6 +16,10 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
         <spring-boot.version>4.0.3</spring-boot.version>
+        <sonar.maven.plugin.version>5.5.0.6356</sonar.maven.plugin.version>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.organization>cominotti</sonar.organization>
+        <sonar.projectKey>cominotti_java-evo</sonar.projectKey>
     </properties>
 
     <dependencyManagement>
@@ -54,6 +58,16 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar.maven.plugin.version}</version>
+            </plugin>
+        </plugins>
+    </build>
 
     <modules>
         <module>evo-core</module>
