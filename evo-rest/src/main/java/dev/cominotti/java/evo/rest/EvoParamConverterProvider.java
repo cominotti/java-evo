@@ -3,7 +3,7 @@ package dev.cominotti.java.evo.rest;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
 
-import dev.cominotti.java.evo.CpfOrCnpj;
+import dev.cominotti.java.evo.taxid.CpfOrCnpj;
 import dev.cominotti.java.evo.EvoTypes;
 import jakarta.ws.rs.ext.ParamConverter;
 import jakarta.ws.rs.ext.ParamConverterProvider;

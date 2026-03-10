@@ -2,7 +2,7 @@ package dev.cominotti.java.evo.jakarta.example.greeting;
 
 import java.time.LocalDateTime;
 
-import dev.cominotti.java.evo.Email;
+import dev.cominotti.java.evo.email.Email;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;

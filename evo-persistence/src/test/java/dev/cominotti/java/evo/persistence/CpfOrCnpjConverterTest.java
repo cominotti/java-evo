@@ -1,8 +1,8 @@
 package dev.cominotti.java.evo.persistence;
 
-import dev.cominotti.java.evo.Cnpj;
-import dev.cominotti.java.evo.Cpf;
-import dev.cominotti.java.evo.CpfOrCnpj;
+import dev.cominotti.java.evo.taxid.Cnpj;
+import dev.cominotti.java.evo.taxid.Cpf;
+import dev.cominotti.java.evo.taxid.CpfOrCnpj;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -1,4 +1,4 @@
-package dev.cominotti.java.evo.validation;
+package dev.cominotti.java.evo.taxid;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -12,25 +12,25 @@ import jakarta.validation.ConstraintValidatorContext;
 import jakarta.validation.Payload;
 
 @Documented
-@Constraint(validatedBy = CpfCheckDigit.Validator.class)
+@Constraint(validatedBy = NotAllSameDigit.Validator.class)
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CpfCheckDigit {
+public @interface NotAllSameDigit {
 
-    String message() default "{evo.cpf.checkDigit}";
+    String message() default "{evo.notAllSameDigit}";
 
     Class<?>[] groups() default {};
 
     Class<? extends Payload>[] payload() default {};
 
-    class Validator implements ConstraintValidator<CpfCheckDigit, String> {
+    class Validator implements ConstraintValidator<NotAllSameDigit, String> {
 
         @Override
         public boolean isValid(String value, ConstraintValidatorContext context) {
-            if (value == null || !value.matches(CpfRules.REGEX)) {
+            if (value == null || value.isEmpty()) {
                 return true;
             }
-            return CpfRules.hasValidCheckDigits(value);
+            return value.chars().distinct().count() != 1;
         }
     }
 }

@@ -21,20 +21,24 @@ Use when:
 java-evo/                              ← multi-module Maven root
 ├── evo-core/                          ← domain EVOs + validation (jakarta.validation only)
 │   └── dev.cominotti.java.evo/
-│       ├── EvoType.java    ← marker annotation
-│       ├── Email.java                    ← domain record (no jakarta.persistence)
-│       ├── Cpf.java                      ← domain record implements CpfOrCnpj
-│       ├── Cnpj.java                     ← domain record implements CpfOrCnpj
-│       ├── CpfOrCnpj.java               ← sealed interface (union type)
+│       ├── EvoType.java                  ← marker annotation (shared)
+│       ├── EvoTypes.java                 ← reflection utilities (shared)
+│       ├── email/
+│       │   ├── Email.java                ← domain record (no jakarta.persistence)
+│       │   └── EmailRules.java           ← Email: MAX_LENGTH, messages
+│       ├── taxid/
+│       │   ├── CpfOrCnpj.java           ← sealed interface (union type)
+│       │   ├── Cpf.java                  ← domain record implements CpfOrCnpj
+│       │   ├── Cnpj.java                 ← domain record implements CpfOrCnpj
+│       │   ├── CpfRules.java             ← CPF: REGEX, messages, hasValidCheckDigits()
+│       │   ├── CnpjRules.java            ← CNPJ: REGEX, messages, hasValidCheckDigits()
+│       │   ├── TaxIdRules.java           ← shared: mod11Remainder(), CpfOrCnpj messages
+│       │   ├── NotAllSameDigit.java      ← @NotAllSameDigit + nested ConstraintValidator
+│       │   ├── CpfCheckDigit.java        ← @CpfCheckDigit + nested ConstraintValidator
+│       │   └── CnpjCheckDigit.java       ← @CnpjCheckDigit + nested ConstraintValidator
 │       └── validation/
 │           ├── EvoValidation.java        ← replaceable Validator holder + validate()
-│           ├── TaxIdRules.java           ← shared: mod11Remainder(), CpfOrCnpj messages
-│           ├── CpfRules.java             ← CPF: REGEX, messages, hasValidCheckDigits()
-│           ├── CnpjRules.java            ← CNPJ: REGEX, messages, hasValidCheckDigits()
-│           ├── EmailRules.java           ← Email: MAX_LENGTH, messages
-│           ├── NotAllSameDigit.java      ← @NotAllSameDigit + nested ConstraintValidator
-│           ├── CpfCheckDigit.java        ← @CpfCheckDigit + nested ConstraintValidator
-│           └── CnpjCheckDigit.java       ← @CnpjCheckDigit + nested ConstraintValidator
+│           └── EvoMessages.java          ← resource bundle resolver for direct-throw paths
 ├── evo-persistence/                   ← JPA converters + auto column length (jakarta.persistence + hibernate)
 │   └── dev.cominotti.java.evo.persistence/
 │       ├── StringEvoConverter.java       ← abstract autoApply converter base
@@ -81,10 +85,10 @@ java-evo/                              ← multi-module Maven root
 
 ## Creating a New EVO Type
 
-### Step 1: Create a Rules class (in `evo-core`)
+### Step 1: Create a Rules class (in `evo-core`, co-located with the EVO type)
 
 ```java
-package dev.cominotti.java.evo.validation;
+package dev.cominotti.java.evo.phone;
 
 public final class PhoneRules {
     private PhoneRules() {}
@@ -99,14 +103,14 @@ public final class PhoneRules {
 }
 ```
 
-### Step 2: Define the Record in `evo-core` (no jakarta.persistence)
+### Step 2: Define the Record (same subpackage as its Rules class)
 
 ```java
-package dev.cominotti.java.evo;
+package dev.cominotti.java.evo.phone;
 
+import dev.cominotti.java.evo.EvoType;
 import dev.cominotti.java.evo.validation.EvoMessages;
 import dev.cominotti.java.evo.validation.EvoValidation;
-import dev.cominotti.java.evo.validation.PhoneRules;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
@@ -145,7 +149,7 @@ The `EvoModule` (Jackson) auto-discovers any `@EvoType` record with a single `St
 ```java
 package dev.cominotti.java.evo.jsonb;
 
-import dev.cominotti.java.evo.Phone;
+import dev.cominotti.java.evo.phone.Phone;
 
 public class PhoneJsonbAdapter extends StringEvoJsonbAdapter<Phone> {
     public PhoneJsonbAdapter() { super(Phone::value, Phone.class); }
@@ -164,7 +168,7 @@ The adapter is auto-discovered by `EvoJsonbConfig.withDefaults()` via `ServiceLo
 ```java
 package dev.cominotti.java.evo.persistence;
 
-import dev.cominotti.java.evo.Phone;
+import dev.cominotti.java.evo.phone.Phone;
 import jakarta.persistence.Converter;
 
 @Converter(autoApply = true)
@@ -407,10 +411,10 @@ class EvoPersistenceIntegrationTest {
 
 | Type | Package | Validation | Column Default | Notes |
 |---|---|---|---|---|
-| `Email` | `evo` | `@NotBlank @Email @Size(max=320)` — constants in `EmailRules` | `email VARCHAR(320)` | RFC 5321 max length |
-| `Cpf` | `evo` | `@NotBlank @Pattern @NotAllSameDigit @CpfCheckDigit` — constants in `CpfRules` | `cpf VARCHAR(11)` | Brazilian individual tax ID |
-| `Cnpj` | `evo` | `@NotBlank @Pattern @NotAllSameDigit @CnpjCheckDigit` — constants in `CnpjRules` | `cnpj VARCHAR(14)` | Brazilian company tax ID |
-| `CpfOrCnpj` | `evo` | Sealed interface — delegates to Cpf/Cnpj — messages in `TaxIdRules` | via `@Convert` | Union type with `of()` and `parse()` |
+| `Email` | `evo.email` | `@NotBlank @Email @Size(max=320)` — constants in `EmailRules` | `email VARCHAR(320)` | RFC 5321 max length |
+| `Cpf` | `evo.taxid` | `@NotBlank @Pattern @NotAllSameDigit @CpfCheckDigit` — constants in `CpfRules` | `cpf VARCHAR(11)` | Brazilian individual tax ID |
+| `Cnpj` | `evo.taxid` | `@NotBlank @Pattern @NotAllSameDigit @CnpjCheckDigit` — constants in `CnpjRules` | `cnpj VARCHAR(14)` | Brazilian company tax ID |
+| `CpfOrCnpj` | `evo.taxid` | Sealed interface — delegates to Cpf/Cnpj — messages in `TaxIdRules` | via `@Convert` | Union type with `of()` and `parse()` |
 
 ## Technical Constraints
 

@@ -1,7 +1,11 @@
 package dev.cominotti.java.evo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import dev.cominotti.java.evo.email.Email;
 import dev.cominotti.java.evo.greeting.Greeting;
+import dev.cominotti.java.evo.taxid.Cnpj;
+import dev.cominotti.java.evo.taxid.Cpf;
+import dev.cominotti.java.evo.taxid.CpfOrCnpj;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

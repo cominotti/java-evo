@@ -1,6 +1,6 @@
 package dev.cominotti.java.evo.persistence;
 
-import dev.cominotti.java.evo.Email;
+import dev.cominotti.java.evo.email.Email;
 import jakarta.persistence.Converter;
 
 /**

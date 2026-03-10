@@ -1,6 +1,6 @@
 package dev.cominotti.java.evo.jackson;
 
-import dev.cominotti.java.evo.CpfOrCnpj;
+import dev.cominotti.java.evo.taxid.CpfOrCnpj;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonGenerator;

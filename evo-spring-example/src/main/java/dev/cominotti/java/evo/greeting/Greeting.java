@@ -2,20 +2,19 @@ package dev.cominotti.java.evo.greeting;
 
 import java.time.LocalDateTime;
 
-import dev.cominotti.java.evo.Cnpj;
-import dev.cominotti.java.evo.Cpf;
-import dev.cominotti.java.evo.CpfOrCnpj;
-import dev.cominotti.java.evo.Email;
+import dev.cominotti.java.evo.email.Email;
 import dev.cominotti.java.evo.persistence.CpfOrCnpjConverter;
-import dev.cominotti.java.evo.validation.CnpjRules;
-import dev.cominotti.java.evo.validation.CpfRules;
+import dev.cominotti.java.evo.taxid.Cnpj;
+import dev.cominotti.java.evo.taxid.CnpjRules;
+import dev.cominotti.java.evo.taxid.Cpf;
+import dev.cominotti.java.evo.taxid.CpfOrCnpj;
+import dev.cominotti.java.evo.taxid.CpfRules;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-
 
 @Entity
 public class Greeting {

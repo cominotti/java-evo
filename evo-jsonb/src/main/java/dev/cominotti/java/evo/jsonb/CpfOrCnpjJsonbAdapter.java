@@ -1,6 +1,6 @@
 package dev.cominotti.java.evo.jsonb;
 
-import dev.cominotti.java.evo.CpfOrCnpj;
+import dev.cominotti.java.evo.taxid.CpfOrCnpj;
 import jakarta.json.bind.JsonbException;
 import jakarta.json.bind.adapter.JsonbAdapter;
 

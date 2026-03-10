@@ -1,8 +1,8 @@
 package dev.cominotti.java.evo;
 
-import dev.cominotti.java.evo.validation.CnpjRules;
-import dev.cominotti.java.evo.validation.CpfRules;
-import dev.cominotti.java.evo.validation.EmailRules;
+import dev.cominotti.java.evo.email.EmailRules;
+import dev.cominotti.java.evo.taxid.CnpjRules;
+import dev.cominotti.java.evo.taxid.CpfRules;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;

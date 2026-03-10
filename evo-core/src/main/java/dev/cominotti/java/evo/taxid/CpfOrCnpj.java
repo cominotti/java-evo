@@ -1,7 +1,7 @@
-package dev.cominotti.java.evo;
+package dev.cominotti.java.evo.taxid;
 
+import dev.cominotti.java.evo.EvoType;
 import dev.cominotti.java.evo.validation.EvoMessages;
-import dev.cominotti.java.evo.validation.TaxIdRules;
 
 @EvoType
 public sealed interface CpfOrCnpj permits Cpf, Cnpj {

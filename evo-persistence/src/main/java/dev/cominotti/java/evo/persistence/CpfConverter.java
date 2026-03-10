@@ -1,6 +1,6 @@
 package dev.cominotti.java.evo.persistence;
 
-import dev.cominotti.java.evo.Cpf;
+import dev.cominotti.java.evo.taxid.Cpf;
 import jakarta.persistence.Converter;
 
 /**

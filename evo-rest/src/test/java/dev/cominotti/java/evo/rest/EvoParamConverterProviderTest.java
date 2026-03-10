@@ -1,8 +1,8 @@
 package dev.cominotti.java.evo.rest;
 
-import dev.cominotti.java.evo.Cpf;
-import dev.cominotti.java.evo.CpfOrCnpj;
-import dev.cominotti.java.evo.Email;
+import dev.cominotti.java.evo.email.Email;
+import dev.cominotti.java.evo.taxid.Cpf;
+import dev.cominotti.java.evo.taxid.CpfOrCnpj;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,6 +79,6 @@ class EvoParamConverterProviderTest {
     void cpfOrCnpjConverterDispatchesCnpjByLength() {
         var converter = provider.getConverter(CpfOrCnpj.class, null, null);
         var result = converter.fromString(VALID_CNPJ);
-        assertThat(result).isInstanceOf(dev.cominotti.java.evo.Cnpj.class);
+        assertThat(result).isInstanceOf(dev.cominotti.java.evo.taxid.Cnpj.class);
     }
 }

@@ -1,6 +1,6 @@
 package dev.cominotti.java.evo.greeting;
 
-import dev.cominotti.java.evo.Email;
+import dev.cominotti.java.evo.email.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 

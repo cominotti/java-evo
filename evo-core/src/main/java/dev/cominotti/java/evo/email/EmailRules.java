@@ -1,4 +1,4 @@
-package dev.cominotti.java.evo.validation;
+package dev.cominotti.java.evo.email;
 
 /**
  * Validation rules and resource bundle keys for Email.

@@ -1,6 +1,6 @@
-package dev.cominotti.java.evo;
+package dev.cominotti.java.evo.email;
 
-import dev.cominotti.java.evo.validation.EmailRules;
+import dev.cominotti.java.evo.EvoType;
 import dev.cominotti.java.evo.validation.EvoValidation;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

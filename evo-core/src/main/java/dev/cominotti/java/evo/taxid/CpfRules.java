@@ -1,4 +1,4 @@
-package dev.cominotti.java.evo.validation;
+package dev.cominotti.java.evo.taxid;
 
 /**
  * Validation rules, resource bundle keys, and algorithmic methods for CPF (Brazilian individual tax ID).

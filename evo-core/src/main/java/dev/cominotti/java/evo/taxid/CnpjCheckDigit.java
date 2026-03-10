@@ -1,4 +1,4 @@
-package dev.cominotti.java.evo.validation;
+package dev.cominotti.java.evo.taxid;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;

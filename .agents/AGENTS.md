@@ -18,7 +18,7 @@ mvn spring-boot:run -pl evo-spring-example   # start Spring MVC example (H2 cons
 
 Multi-module Maven project under `dev.cominotti.java.evo`:
 
-- **`evo-core`** — Domain EVOs (Java Records with `@EvoType`) and validation (`EvoValidation`, `*Rules` classes, custom constraint annotations). Dependencies: Jakarta Validation only. See the `/evo` skill for the full guide on creating and using EVOs.
+- **`evo-core`** — Domain EVOs (Java Records with `@EvoType`) and validation. Organized into subpackages: `email/` (Email + EmailRules), `taxid/` (Cpf, Cnpj, CpfOrCnpj + all tax ID rules and constraints), `validation/` (shared EvoValidation + EvoMessages). Shared infrastructure (`EvoType`, `EvoTypes`) stays in the root package. Dependencies: Jakarta Validation only. See the `/evo` skill for the full guide on creating and using EVOs.
 - **`evo-persistence`** — JPA converters (`autoApply = true`, `StringEvoConverter<T>` base) and `EvoColumnMetadataIntegrator` (Hibernate `Integrator` that auto-derives column lengths from `@Size(max)` on EVO types). Dependencies: Jakarta Persistence + Hibernate.
 - **`evo-jackson`** — `EvoModule` for flat-string JSON serialization/deserialization of `@EvoType` records. Dependencies: Jackson + optional Spring Context (for `@Component` auto-registration).
 - **`evo-jsonb`** — `StringEvoJsonbAdapter<T>` for flat-string JSON-B serialization. Per-type adapters auto-discovered via `ServiceLoader` (`EvoJsonbAdapterProvider`). Dependencies: Jakarta JSON Binding.
@@ -39,11 +39,11 @@ EVOs are records with a single `String value` component annotated with Jakarta V
 - Auto-discovered via `META-INF/services/org.hibernate.integrator.spi.Integrator` — zero configuration needed
 - Entity fields use standard `@Column(name = "email")` — length auto-derived from `@Size(max=320)`. For types without `@Size`, use `@Column(name = "cpf", length = 11)` explicitly
 
-**Validation architecture** (`evo-core`, `validation/` subpackage):
+**Validation architecture** (`evo-core`):
+- Each EVO type's `*Rules` class and custom constraints are co-located in the same subpackage as the EVO record: `email/EmailRules`, `taxid/CpfRules`, `taxid/CnpjRules`, `taxid/TaxIdRules`, etc.
 - `*Rules` classes hold regexes, **resource bundle keys** (`"{evo.cpf.blank}"`), and algorithmic methods
-- Custom constraint annotations have nested `ConstraintValidator` classes that delegate to `*Rules`
-- `EvoValidation` caches a `Validator` instance (replaceable via `setValidatorFactory()`)
-- `EvoMessages.resolve()` handles direct-throw paths (`parse()`, `CpfOrCnpj.of()`) using the same resource bundle
+- Custom constraint annotations (`taxid/NotAllSameDigit`, `taxid/CpfCheckDigit`, `taxid/CnpjCheckDigit`) have nested `ConstraintValidator` classes that delegate to `*Rules`
+- Shared infrastructure stays in `validation/`: `EvoValidation` caches a `Validator` instance (replaceable via `setValidatorFactory()`), `EvoMessages.resolve()` handles direct-throw paths (`parse()`, `CpfOrCnpj.of()`) using the same resource bundle
 - Messages live in `src/main/resources/ValidationMessages.properties` — i18n via locale-specific variants (`ValidationMessages_pt_BR.properties`, etc.)
 
 **Sealed interface for union types:** `CpfOrCnpj` is a `sealed interface permits Cpf, Cnpj` persisted via `@Column(name = "tax_id", length = CnpjRules.DIGIT_COUNT)` + explicit `@Convert(converter = CpfOrCnpjConverter.class)`. The converter must NOT be `autoApply = true` — Hibernate 7 throws "Multiple auto-apply converters matched" when both a supertype and subtype converter have `autoApply = true`. Sealed interfaces need explicit `length` because `EvoColumnMetadataIntegrator` only reads `@Size` from single-String `@EvoType` records, not from sealed interfaces.

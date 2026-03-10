@@ -1,4 +1,4 @@
-package dev.cominotti.java.evo.validation;
+package dev.cominotti.java.evo.taxid;
 
 /**
  * Shared validation rules and resource bundle keys for the CpfOrCnpj sealed interface.

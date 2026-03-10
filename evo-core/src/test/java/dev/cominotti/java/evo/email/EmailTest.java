@@ -1,4 +1,4 @@
-package dev.cominotti.java.evo;
+package dev.cominotti.java.evo.email;
 
 import org.junit.jupiter.api.Test;
 

@@ -1,9 +1,9 @@
 package dev.cominotti.java.evo.jackson;
 
-import dev.cominotti.java.evo.Cnpj;
-import dev.cominotti.java.evo.Cpf;
-import dev.cominotti.java.evo.CpfOrCnpj;
-import dev.cominotti.java.evo.Email;
+import dev.cominotti.java.evo.email.Email;
+import dev.cominotti.java.evo.taxid.Cnpj;
+import dev.cominotti.java.evo.taxid.Cpf;
+import dev.cominotti.java.evo.taxid.CpfOrCnpj;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;

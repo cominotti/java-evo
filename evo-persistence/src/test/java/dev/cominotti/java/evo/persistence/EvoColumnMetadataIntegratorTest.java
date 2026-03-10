@@ -1,10 +1,10 @@
 package dev.cominotti.java.evo.persistence;
 
-import dev.cominotti.java.evo.Cpf;
-import dev.cominotti.java.evo.CpfOrCnpj;
-import dev.cominotti.java.evo.Email;
 import dev.cominotti.java.evo.EvoType;
-import dev.cominotti.java.evo.validation.EmailRules;
+import dev.cominotti.java.evo.email.Email;
+import dev.cominotti.java.evo.email.EmailRules;
+import dev.cominotti.java.evo.taxid.Cpf;
+import dev.cominotti.java.evo.taxid.CpfOrCnpj;
 import dev.cominotti.java.evo.validation.EvoValidation;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

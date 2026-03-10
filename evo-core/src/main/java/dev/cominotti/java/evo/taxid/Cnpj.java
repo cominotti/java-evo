@@ -1,10 +1,8 @@
-package dev.cominotti.java.evo;
+package dev.cominotti.java.evo.taxid;
 
-import dev.cominotti.java.evo.validation.CnpjCheckDigit;
-import dev.cominotti.java.evo.validation.CnpjRules;
+import dev.cominotti.java.evo.EvoType;
 import dev.cominotti.java.evo.validation.EvoMessages;
 import dev.cominotti.java.evo.validation.EvoValidation;
-import dev.cominotti.java.evo.validation.NotAllSameDigit;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 
