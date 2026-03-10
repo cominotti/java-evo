@@ -1,6 +1,6 @@
 # java-evo
 
-Enterprise Value Objects (EVOs) for Java — DDD value types as self-validating Records with Jakarta Validation, JPA persistence via `autoApply` converters, and Jackson flat-string serialization.
+Enterprise Value Objects (EVOs) for Java — DDD value types as self-validating Records with Jakarta Validation, JPA persistence via `autoApply` converters, and flat-string serialization for both Jackson and JSON-B.
 
 ## What are EVOs?
 
@@ -24,10 +24,13 @@ public record Email(
 
 | Module | Purpose | Dependencies |
 |---|---|---|
-| **`evo-core`** | Domain EVOs + validation (`EvoValidation`, `*Rules`, custom constraints) | Jakarta Validation only |
+| **`evo-core`** | Domain EVOs + validation (`EvoValidation`, `EvoTypes`, `*Rules`, custom constraints) | Jakarta Validation only |
 | **`evo-persistence`** | JPA `autoApply` converters + unified `@EvoColumn` annotation | Jakarta Persistence + Hibernate |
-| **`evo-jackson`** | `EvoModule` for flat-string JSON serialization/deserialization | Jackson 3.0 + optional Spring Context |
-| **`evo-example`** | Spring Boot example app demonstrating full EVO integration | All modules + Spring Boot 4 |
+| **`evo-jackson`** | `EvoModule` for flat-string JSON serialization (Jackson) | Jackson 3.0 + optional Spring Context |
+| **`evo-jsonb`** | `StringEvoJsonbAdapter<T>` for flat-string JSON serialization (JSON-B) | Jakarta JSON Binding |
+| **`evo-rest`** | Jakarta REST integration (`ExceptionMapper`, `ParamConverterProvider`) | Jakarta REST + JSON Binding + Validation |
+| **`evo-spring-example`** | Spring Boot + Spring MVC example app | evo-core/persistence/jackson + Spring Boot 4 |
+| **`evo-jakarta-example`** | Standalone Jakarta REST + JSON-B example app (no Spring) | evo-core/persistence/jsonb/rest + Jersey + Grizzly |
 
 ## Key Design Decisions
 
@@ -35,82 +38,86 @@ public record Email(
 
 EVOs validate in their compact constructor via `EvoValidation.validate()`. Any EVO instance that exists is guaranteed valid. `@Valid` on EVO entity fields or DTO components is unnecessary — the constructor validates before the object exists.
 
-During Jackson deserialization, invalid values are rejected immediately by the constructor. The `EvoExceptionHandler` in `evo-example` surfaces the i18n validation message as a clean `ProblemDetail` (RFC 9457) response.
-
 ### Persistence via `@EvoColumn` + `autoApply` converters
 
 EVOs carry **no** `@Embeddable` or `@Column`. Persistence is fully decoupled:
 
 ```java
-// Entity field — length derived from @Size(max=320) on Email.value
-@EvoColumn(name = "email", nullable = true)
+@EvoColumn(name = "email", nullable = true)    // length derived from @Size(max=320)
 private Email email;
 
-// Explicit length for types without @Size
-@EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT)
+@EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT)  // NOT NULL by default
 private Cpf authorCpf;
 ```
 
-- **Column length**: derived automatically from `@Size(max)` on the EVO's `value` field, or set explicitly via `@EvoColumn(length = ...)`
+- **Column length**: derived from `@Size(max)` or set explicitly via `@EvoColumn(length = ...)`
 - **Column nullability**: defaults to **NOT NULL** (`nullable = false`). Use `nullable = true` for optional fields
-- **Type conversion**: handled by `autoApply` converters (`EmailConverter`, `CpfConverter`, `CnpjConverter`) — no `@Convert` annotation needed on entity fields (except for sealed interfaces like `CpfOrCnpj`)
+- **Type conversion**: `autoApply` converters — no `@Convert` needed (except for sealed interfaces)
 
-### Flat-string JSON serialization
+### Dual serialization: Jackson + JSON-B
 
-With the `EvoModule` registered (auto-registered as `@Component` in Spring), EVOs serialize as bare JSON strings:
+**Jackson** (`evo-jackson`): `EvoModule` auto-detects `@EvoType` records via `ValueSerializerModifier` — zero configuration needed.
 
-```json
-{"email": "alice@example.com", "authorCpf": "52998224725"}
-```
-
-Jackson annotations like `@JsonProperty` on EVO fields in DTOs work correctly:
+**JSON-B** (`evo-jsonb`): `StringEvoJsonbAdapter<T>` base class with per-type one-liner subclasses. Adapters are auto-discovered via `ServiceLoader`:
 
 ```java
-public record CreateUserRequest(
-    @JsonProperty("contact_email") Email email   // JSON uses "contact_email"
-) {}
+// One-liner adapter:
+public class PhoneJsonbAdapter extends StringEvoJsonbAdapter<Phone> {
+    public PhoneJsonbAdapter() { super(Phone::value, Phone.class); }
+}
+
+// Register in META-INF/services/dev.cominotti.java.evo.jsonb.EvoJsonbAdapterProvider
+
+// Auto-discovered — no explicit registration:
+var jsonb = JsonbBuilder.create(EvoJsonbConfig.withDefaults(new JsonbConfig()));
 ```
+
+Both produce the same flat-string JSON: `{"email": "alice@example.com"}`
 
 ### Unified error responses
 
-`EvoExceptionHandler` (`@RestControllerAdvice` in `evo-example`) produces consistent RFC 9457 `ProblemDetail` responses for both EVO deserialization errors and Jakarta Validation errors:
+Both Spring MVC and Jakarta REST produce the same error format:
 
 ```json
 {
   "title": "Validation failed",
   "status": 400,
   "detail": "Request validation failed with 1 error(s).",
-  "errors": [
-    {"field": "email", "message": "Email must be a valid email address"}
-  ]
+  "errors": [{"field": "email", "message": "Email must be a valid email address"}]
 }
 ```
 
-Nested EVO fields report full dotted paths (e.g., `contact.address.email`).
+- **Spring MVC** (`evo-spring-example`): `EvoExceptionHandler` handles `HttpMessageNotReadableException` + `MethodArgumentNotValidException` → `ProblemDetail`
+- **Jakarta REST** (`evo-rest`): `EvoJsonbExceptionMapper` handles `ProcessingException` (wrapping `JsonbException`) + `EvoConstraintViolationExceptionMapper` handles `ConstraintViolationException` → `ValidationProblem`
 
 ### Sealed interfaces for union types
 
 `CpfOrCnpj` is a `sealed interface permits Cpf, Cnpj` with:
-- Explicit `@Convert(converter = CpfOrCnpjConverter.class)` on entity fields (NOT `autoApply` — Hibernate 7 throws "Multiple auto-apply converters matched" when both supertype and subtype converters use `autoApply`)
+- Explicit `@Convert(converter = CpfOrCnpjConverter.class)` on entity fields (NOT `autoApply`)
 - Explicit `@EvoColumn(length = ...)` (length derivation reads `@Size` from concrete types only)
-- Auto-detection in Jackson (`CpfOrCnpj.of(value)` detects CPF vs CNPJ by digit count)
+- Auto-detection by digit count in both Jackson (`CpfOrCnpj.of()`) and JSON-B (`CpfOrCnpjJsonbAdapter`)
 
 ## Stack
 
 - Java 25, Maven 3.9.12 (via [mise](https://mise.jdx.dev/))
 - Spring Boot 4.0.3, Hibernate 7.2.4
-- Jackson 3.0.4 (`tools.jackson.*` packages, annotations still in `com.fasterxml.jackson.annotation`)
+- Jackson 3.0.4, JSON-B 3.0.1 (Yasson)
+- Jersey 4.0.2 (Jakarta REST), Grizzly HTTP server
 - Jakarta Validation 3.1, Jakarta Persistence 3.2
-- H2 (in-memory, for the example app)
+- H2 (in-memory, for example apps)
 
 ## Quick Start
 
 ```bash
-# Run all tests
+# Run all tests (all 7 modules)
 mvn test
 
-# Start the example app (H2 console at localhost:8080/h2-console)
-mvn spring-boot:run -pl evo-example
+# Start the Spring MVC example (port 8080)
+mvn spring-boot:run -pl evo-spring-example
+
+# Start the Jakarta REST example (port 8081)
+mvn exec:java -pl evo-jakarta-example \
+  -Dexec.mainClass=dev.cominotti.java.evo.jakarta.example.JakartaEvoApplication
 
 # Create a greeting with an EVO field
 curl -X POST http://localhost:8080/greetings \

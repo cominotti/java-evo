@@ -47,12 +47,26 @@ java-evo/                              ← multi-module Maven root
 ├── evo-jackson/                       ← EvoModule for flat-string JSON ser/des (jackson + optional spring-context)
 │   └── dev.cominotti.java.evo.jackson/
 │       ├── EvoModule.java                ← Jackson 3.0 Module (auto-registered @Component)
-│       ├── SingleValueEvoSerializer.java ← detects @EvoType records
+│       ├── SingleValueEvoSerializer.java ← detects @EvoType records via EvoTypes
 │       └── SingleValueEvoDeserializer.java
-└── evo-example/                       ← Spring Boot example app
-    └── dev.cominotti.java.evo/
-        ├── JavaEvoApplication.java
-        └── greeting/                     ← example domain: entities, controllers, repositories
+├── evo-jsonb/                         ← JSON-B flat-string ser/des (jakarta.json.bind)
+│   └── dev.cominotti.java.evo.jsonb/
+│       ├── StringEvoJsonbAdapter.java    ← abstract base (mirrors StringEvoConverter)
+│       ├── EmailJsonbAdapter.java        ← per-type one-liner adapters
+│       ├── EvoJsonbConfig.java           ← withDefaults() + ServiceLoader discovery
+│       └── EvoJsonbAdapterProvider.java  ← marker interface for ServiceLoader
+├── evo-rest/                          ← Jakarta REST integration (ExceptionMapper + ParamConverter)
+│   └── dev.cominotti.java.evo.rest/
+│       ├── EvoJsonbExceptionMapper.java  ← ExceptionMapper<ProcessingException>
+│       ├── EvoConstraintViolationExceptionMapper.java
+│       ├── EvoParamConverterProvider.java
+│       └── ValidationProblem.java        ← RFC 9457-like response body
+├── evo-spring-example/                ← Spring Boot + Spring MVC example app
+│   └── dev.cominotti.java.evo/
+│       └── greeting/                     ← entities, controllers, EvoExceptionHandler
+└── evo-jakarta-example/               ← Standalone Jakarta REST + JSON-B example (no Spring)
+    └── dev.cominotti.java.evo.jakarta.example/
+        └── greeting/                     ← resources, entities, JPA repository
 ```
 
 **Key design decisions:**
@@ -126,6 +140,25 @@ public record Phone(
 ### Step 3: No Jackson registration needed
 
 The `EvoModule` (Jackson) auto-discovers any `@EvoType` record with a single `String` component. No manual serializer registration is needed.
+
+### Step 3b: Create the JSON-B adapter (in `evo-jsonb`) — if using JSON-B
+
+```java
+package dev.cominotti.java.evo.jsonb;
+
+import dev.cominotti.java.evo.Phone;
+
+public class PhoneJsonbAdapter extends StringEvoJsonbAdapter<Phone> {
+    public PhoneJsonbAdapter() { super(Phone::value, Phone.class); }
+}
+```
+
+Register in `META-INF/services/dev.cominotti.java.evo.jsonb.EvoJsonbAdapterProvider`:
+```
+dev.cominotti.java.evo.jsonb.PhoneJsonbAdapter
+```
+
+The adapter is auto-discovered by `EvoJsonbConfig.withDefaults()` via `ServiceLoader`.
 
 ### Step 4: Create the persistence converter (in `evo-persistence`)
 
@@ -379,9 +412,12 @@ class EvoPersistenceIntegrationTest {
 ## Technical Constraints
 
 - **Jackson 3.0** (Spring Boot 4): packages are `tools.jackson.*`, NOT `com.fasterxml.jackson.*`
+- **JSON-B 3.0.1**: no `handles()` on `JsonbSerializer` — per-type adapter classes required (type erasure)
+- **Jersey 4**: `AbstractBinder` at `org.glassfish.jersey.inject.hk2.AbstractBinder`; wraps `JsonbException` in `ProcessingException`
 - **Hibernate 7.2.4**: `@AttributeBinderType` + `autoApply` converters compose correctly (verified)
 - Column defaults are **NOT NULL** — use `@EvoColumn(nullable = true)` for optional fields
 - `CpfOrCnpjConverter` must use explicit `@Convert`, NOT `autoApply = true`
+- Standalone JPA needs converters listed in `persistence.xml` `<class>` elements (no classpath scanning without Spring)
 - Without `spring-boot-starter-parent`, add `<maven.compiler.parameters>true</maven.compiler.parameters>` to root POM
 
 ## Java Records Annotation Propagation

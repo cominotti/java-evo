@@ -11,7 +11,7 @@ mvn test                                    # run all tests (all modules)
 mvn test -pl evo-core                       # run tests in a single module
 mvn test -pl evo-core -Dtest=CpfTest        # single test class in a module
 mvn test -pl evo-core -Dtest=CpfTest#validCpfCreatesSuccessfully  # single test method
-mvn spring-boot:run -pl evo-example         # start example app (H2 console at localhost:8080/h2-console)
+mvn spring-boot:run -pl evo-spring-example   # start Spring MVC example (H2 console at localhost:8080/h2-console)
 ```
 
 ## Architecture
@@ -21,7 +21,10 @@ Multi-module Maven project under `dev.cominotti.java.evo`:
 - **`evo-core`** — Domain EVOs (Java Records with `@EvoType`) and validation (`EvoValidation`, `*Rules` classes, custom constraint annotations). Dependencies: Jakarta Validation only. See the `/evo` skill for the full guide on creating and using EVOs.
 - **`evo-persistence`** — JPA converters (`autoApply = true`, `StringEvoConverter<T>` base) and the unified `@EvoColumn` annotation with Hibernate `@AttributeBinderType` binder for column metadata. Dependencies: Jakarta Persistence + Hibernate.
 - **`evo-jackson`** — `EvoModule` for flat-string JSON serialization/deserialization of `@EvoType` records. Dependencies: Jackson + optional Spring Context (for `@Component` auto-registration).
-- **`evo-example`** — Spring Boot example app with `greeting/` package demonstrating EVO integration with entities, controllers, and repositories. Dependencies: all three modules above + Spring Boot.
+- **`evo-jsonb`** — `StringEvoJsonbAdapter<T>` for flat-string JSON-B serialization. Per-type adapters auto-discovered via `ServiceLoader` (`EvoJsonbAdapterProvider`). Dependencies: Jakarta JSON Binding.
+- **`evo-rest`** — Jakarta REST integration: `EvoJsonbExceptionMapper` (`ExceptionMapper<ProcessingException>`), `EvoConstraintViolationExceptionMapper`, `EvoParamConverterProvider`. Dependencies: Jakarta REST + JSON Binding + Validation.
+- **`evo-spring-example`** — Spring Boot + Spring MVC example app with `greeting/` package. Dependencies: evo-core/persistence/jackson + Spring Boot.
+- **`evo-jakarta-example`** — Standalone Jakarta REST + JSON-B example app (no Spring). Jersey + Grizzly + JPA/H2. Dependencies: evo-core/persistence/jsonb/rest + Jersey.
 
 All commands run from the project root and build all modules. Use `-pl <module>` to target a single module (e.g., `mvn test -pl evo-core`).
 
@@ -47,11 +50,20 @@ EVOs are records with a single `String value` component annotated with Jakarta V
 
 **Column nullability:** `@EvoColumn` defaults to **NOT NULL** (`nullable = false`) because most DDD value objects are required. Use `@EvoColumn(name = "email", nullable = true)` for optional fields.
 
-**Error handling architecture** (`evo-example`):
-- `EvoExceptionHandler` (`@RestControllerAdvice`) unifies validation errors into RFC 9457 `ProblemDetail` responses with a consistent `"errors"` array of `{field, message}` entries
-- EVO deserialization errors: `SingleValueEvoDeserializer` and `CpfOrCnpjDeserializer` chain the original `IllegalArgumentException` as the cause of `MismatchedInputException` via `initCause()`. The handler extracts the field name from `MismatchedInputException.getPath()` and the i18n message from the chained IAE
-- Jakarta Validation errors (`MethodArgumentNotValidException`): the same handler maps field errors into the same `ProblemDetail` structure
-- Jackson annotations like `@JsonProperty` on EVO fields in DTOs work correctly — property renaming is handled at the container level, independent of `SingleValueEvoDeserializer`
+**Error handling architecture:**
+- **Spring MVC** (`evo-spring-example`): `EvoExceptionHandler` (`@RestControllerAdvice`) unifies `HttpMessageNotReadableException` (EVO errors) and `MethodArgumentNotValidException` (Jakarta Validation) into RFC 9457 `ProblemDetail` with `{field, message}` errors array. Field names from `MismatchedInputException.getPath()` support nested dotted paths
+- **Jakarta REST** (`evo-rest`): `EvoJsonbExceptionMapper` (`ExceptionMapper<ProcessingException>`) handles EVO errors — Jersey wraps `JsonbException` in `ProcessingException`, so the mapper walks the cause chain for `JsonbException` → `IllegalArgumentException`. Field name extracted via regex from Yasson's message. `EvoConstraintViolationExceptionMapper` handles `ConstraintViolationException`
+- Both produce the same response format: `{"title": "Validation failed", "errors": [{field, message}]}`
+- Jackson `@JsonProperty` / JSON-B `@JsonbProperty` on EVO fields in DTOs work correctly — property renaming at the container level is independent of EVO serializers
+
+**JSON-B adapter registration** (`evo-jsonb`):
+- `StringEvoJsonbAdapter<T>` base class — per-type one-liner subclasses (mirrors `StringEvoConverter<T>` pattern)
+- Adapters implement `EvoJsonbAdapterProvider` and register via `META-INF/services` for `ServiceLoader` auto-discovery
+- `EvoJsonbConfig.withDefaults(config)` discovers all registered adapters automatically
+- Per-type classes required due to JSON-B type erasure — generic adapters can't be matched by the runtime
+
+**Shared utility** (`evo-core`):
+- `EvoTypes.isSingleStringEvoRecord(Class<?>)` — shared detection predicate used by both `evo-jackson` and `evo-jsonb`
 
 ## Jackson 3.0 (Critical)
 
