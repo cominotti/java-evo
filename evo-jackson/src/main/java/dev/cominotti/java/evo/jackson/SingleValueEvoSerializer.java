@@ -2,7 +2,7 @@ package dev.cominotti.java.evo.jackson;
 
 import java.lang.reflect.RecordComponent;
 
-import dev.cominotti.java.evo.EvoType;
+import dev.cominotti.java.evo.EvoTypes;
 import tools.jackson.core.JacksonException;
 import tools.jackson.core.JsonGenerator;
 import tools.jackson.databind.BeanDescription;
@@ -40,14 +40,11 @@ class SingleValueEvoSerializer extends ValueSerializerModifier {
     }
 
     /**
-     * Returns {@code true} if the type is a record annotated with
-     * {@link EvoType} with exactly one {@code String} component.
+     * Delegates to {@link EvoTypes#isSingleStringEvoRecord(Class)} — the shared
+     * predicate in {@code evo-core} used by both Jackson and JSON-B modules.
      */
     static boolean isSingleStringEvoRecord(Class<?> type) {
-        if (!type.isRecord()) return false;
-        if (!type.isAnnotationPresent(EvoType.class)) return false;
-        RecordComponent[] components = type.getRecordComponents();
-        return components.length == 1 && components[0].getType() == String.class;
+        return EvoTypes.isSingleStringEvoRecord(type);
     }
 
     @SuppressWarnings("rawtypes")
