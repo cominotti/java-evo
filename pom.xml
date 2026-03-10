@@ -47,6 +47,11 @@
                 <artifactId>evo-jsonb</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>dev.cominotti.java.evo</groupId>
+                <artifactId>evo-rest</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -55,6 +60,7 @@
         <module>evo-persistence</module>
         <module>evo-jackson</module>
         <module>evo-jsonb</module>
+        <module>evo-rest</module>
         <module>evo-example</module>
     </modules>
 </project>
