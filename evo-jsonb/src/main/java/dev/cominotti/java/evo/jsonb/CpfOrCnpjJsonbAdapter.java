@@ -16,7 +16,7 @@ import jakarta.json.bind.adapter.JsonbAdapter;
  * It has no canonical {@code (String)} constructor; dispatch logic lives in
  * {@code CpfOrCnpj.of()}.</p>
  */
-public class CpfOrCnpjJsonbAdapter implements JsonbAdapter<CpfOrCnpj, String> {
+public class CpfOrCnpjJsonbAdapter implements JsonbAdapter<CpfOrCnpj, String>, EvoJsonbAdapterProvider {
 
     @Override
     public String adaptToJson(CpfOrCnpj obj) {

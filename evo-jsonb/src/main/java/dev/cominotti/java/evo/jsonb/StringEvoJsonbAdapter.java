@@ -39,7 +39,7 @@ import jakarta.json.bind.adapter.JsonbAdapter;
  *
  * @param <T> the concrete EVO record type
  */
-public abstract class StringEvoJsonbAdapter<T> implements JsonbAdapter<T, String> {
+public abstract class StringEvoJsonbAdapter<T> implements JsonbAdapter<T, String>, EvoJsonbAdapterProvider {
 
     private final EvoAccessor<T> accessor;
     private final Constructor<T> constructor;

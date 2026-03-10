@@ -1,0 +1,4 @@
+dev.cominotti.java.evo.jsonb.EmailJsonbAdapter
+dev.cominotti.java.evo.jsonb.CpfJsonbAdapter
+dev.cominotti.java.evo.jsonb.CnpjJsonbAdapter
+dev.cominotti.java.evo.jsonb.CpfOrCnpjJsonbAdapter
