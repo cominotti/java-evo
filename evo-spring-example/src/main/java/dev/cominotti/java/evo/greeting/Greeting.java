@@ -7,9 +7,9 @@ import dev.cominotti.java.evo.Cpf;
 import dev.cominotti.java.evo.CpfOrCnpj;
 import dev.cominotti.java.evo.Email;
 import dev.cominotti.java.evo.persistence.CpfOrCnpjConverter;
-import dev.cominotti.java.evo.persistence.EvoColumn;
 import dev.cominotti.java.evo.validation.CnpjRules;
 import dev.cominotti.java.evo.validation.CpfRules;
+import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -30,16 +30,16 @@ public class Greeting {
 
     private LocalDateTime createdAt;
 
-    @EvoColumn(name = "email", nullable = true)
+    @Column(name = "email")
     private Email email;
 
-    @EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT, nullable = true)
+    @Column(name = "author_cpf", length = CpfRules.DIGIT_COUNT)
     private Cpf authorCpf;
 
-    @EvoColumn(name = "company_cnpj", length = CnpjRules.DIGIT_COUNT, nullable = true)
+    @Column(name = "company_cnpj", length = CnpjRules.DIGIT_COUNT)
     private Cnpj companyCnpj;
 
-    @EvoColumn(name = "tax_id", length = CnpjRules.DIGIT_COUNT, nullable = true)
+    @Column(name = "tax_id", length = CnpjRules.DIGIT_COUNT)
     @Convert(converter = CpfOrCnpjConverter.class)
     private CpfOrCnpj taxId;
 

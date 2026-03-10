@@ -199,15 +199,15 @@ still excluded from primitive-type findings.
 
 ---
 
-## Approach A Enhanced — Unified @EvoColumn with @AttributeBinderType
+## Approach A Enhanced — Automatic Column Length via Integrator
 
-> Addresses all weaknesses of vanilla Approach A by replacing `@Column` with a single unified
-> `@EvoColumn` annotation backed by Hibernate's `@AttributeBinderType`. Column length is either
-> derived automatically from `@Size(max)` on the EVO type's `value` field, or specified explicitly
-> via the `length` attribute — developers **cannot** forget or misstate it.
+> **Superseded:** The original `@EvoColumn` + `@AttributeBinderType` approach was replaced by
+> `EvoColumnMetadataIntegrator` (Hibernate `Integrator`). Entity fields now use standard
+> `@Column` — column length is auto-derived from `@Size(max)` on the EVO type's `value` field
+> when the column has the JPA default length (255). Explicit `@Column(length = N)` overrides.
 >
-> **Verified on Hibernate 7.2.4 + Spring Boot 4.0.3 + Java 25.** The `@AttributeBinderType` +
-> `autoApply` converter interaction works correctly: 156 tests pass, column metadata is verified
+> **Verified on Hibernate 7.2.4 + Spring Boot 4.0.3 + Java 25.** The Integrator +
+> `autoApply` converter interaction works correctly: 212 tests pass, column metadata is verified
 > via H2 `INFORMATION_SCHEMA.COLUMNS` queries.
 
 ### How it works

@@ -3,7 +3,7 @@ package dev.cominotti.java.evo.jakarta.example.greeting;
 import java.time.LocalDateTime;
 
 import dev.cominotti.java.evo.Email;
-import dev.cominotti.java.evo.persistence.EvoColumn;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -22,7 +22,7 @@ public class Greeting {
 
     private LocalDateTime createdAt;
 
-    @EvoColumn(name = "email", nullable = true)
+    @Column(name = "email")
     private Email email;
 
     protected Greeting() {

@@ -25,7 +25,7 @@ public record Email(
 | Module | Purpose | Dependencies |
 |---|---|---|
 | **`evo-core`** | Domain EVOs + validation (`EvoValidation`, `EvoTypes`, `*Rules`, custom constraints) | Jakarta Validation only |
-| **`evo-persistence`** | JPA `autoApply` converters + unified `@EvoColumn` annotation | Jakarta Persistence + Hibernate |
+| **`evo-persistence`** | JPA `autoApply` converters + automatic column length derivation | Jakarta Persistence + Hibernate |
 | **`evo-jackson`** | `EvoModule` for flat-string JSON serialization (Jackson) | Jackson 3.0 + optional Spring Context |
 | **`evo-jsonb`** | `StringEvoJsonbAdapter<T>` for flat-string JSON serialization (JSON-B) | Jakarta JSON Binding |
 | **`evo-rest`** | Jakarta REST integration (`ExceptionMapper`, `ParamConverterProvider`) | Jakarta REST + JSON Binding + Validation |
@@ -38,20 +38,20 @@ public record Email(
 
 EVOs validate in their compact constructor via `EvoValidation.validate()`. Any EVO instance that exists is guaranteed valid. `@Valid` on EVO entity fields or DTO components is unnecessary — the constructor validates before the object exists.
 
-### Persistence via `@EvoColumn` + `autoApply` converters
+### Persistence via standard `@Column` + `autoApply` converters
 
-EVOs carry **no** `@Embeddable` or `@Column`. Persistence is fully decoupled:
+EVOs carry **no** `@Embeddable`. Entity fields use standard JPA `@Column`, with column lengths auto-derived by `EvoColumnMetadataIntegrator`:
 
 ```java
-@EvoColumn(name = "email", nullable = true)    // length derived from @Size(max=320)
+@Column(name = "email")                                         // length auto-derived from @Size(max=320)
 private Email email;
 
-@EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT)  // NOT NULL by default
+@Column(name = "author_cpf", length = CpfRules.DIGIT_COUNT, nullable = false)  // explicit length + NOT NULL
 private Cpf authorCpf;
 ```
 
-- **Column length**: derived from `@Size(max)` or set explicitly via `@EvoColumn(length = ...)`
-- **Column nullability**: defaults to **NOT NULL** (`nullable = false`). Use `nullable = true` for optional fields
+- **Column length**: auto-derived from `@Size(max)` when the column has JPA default length (255), or set explicitly via `@Column(length = ...)`
+- **Column nullability**: standard JPA default (`nullable = true`). Use `@Column(nullable = false)` for required fields
 - **Type conversion**: `autoApply` converters — no `@Convert` needed (except for sealed interfaces)
 
 ### Dual serialization: Jackson + JSON-B
@@ -94,7 +94,7 @@ Both Spring MVC and Jakarta REST produce the same error format:
 
 `CpfOrCnpj` is a `sealed interface permits Cpf, Cnpj` with:
 - Explicit `@Convert(converter = CpfOrCnpjConverter.class)` on entity fields (NOT `autoApply`)
-- Explicit `@EvoColumn(length = ...)` (length derivation reads `@Size` from concrete types only)
+- Explicit `@Column(length = ...)` (auto-derivation reads `@Size` from `@EvoType` records only, not sealed interfaces)
 - Auto-detection by digit count in both Jackson (`CpfOrCnpj.of()`) and JSON-B (`CpfOrCnpjJsonbAdapter`)
 
 ## Stack

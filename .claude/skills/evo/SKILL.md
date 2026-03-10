@@ -1,11 +1,11 @@
 ---
 name: evo
-description: Guide for creating, configuring, and using Enterprise Value Objects (EVOs) — DDD value types as Java Records with Jakarta Validation, Jackson and JSON-B support, persisted via autoApply converters and @AttributeBinderType column annotations.
+description: Guide for creating, configuring, and using Enterprise Value Objects (EVOs) — DDD value types as Java Records with Jakarta Validation, Jackson and JSON-B support, persisted via autoApply converters with automatic column length derivation.
 ---
 
 # Enterprise Value Objects (EVOs)
 
-EVOs are DDD Value Types implemented as Java Records. They are immutable, self-validating, and work seamlessly with JPA persistence (via `autoApply` converters + `@AttributeBinderType` column annotations), Jakarta Validation, and Jackson serialization. EVOs carry **no** `jakarta.persistence` annotations — persistence concerns are fully decoupled into the `evo-persistence` module.
+EVOs are DDD Value Types implemented as Java Records. They are immutable, self-validating, and work seamlessly with JPA persistence (via `autoApply` converters + automatic column length derivation by `EvoColumnMetadataIntegrator`), Jakarta Validation, and Jackson serialization. EVOs carry **no** `jakarta.persistence` annotations — persistence concerns are fully decoupled into the `evo-persistence` module.
 
 ## When to Use This Skill
 
@@ -35,15 +35,14 @@ java-evo/                              ← multi-module Maven root
 │           ├── NotAllSameDigit.java      ← @NotAllSameDigit + nested ConstraintValidator
 │           ├── CpfCheckDigit.java        ← @CpfCheckDigit + nested ConstraintValidator
 │           └── CnpjCheckDigit.java       ← @CnpjCheckDigit + nested ConstraintValidator
-├── evo-persistence/                   ← JPA converters + @EvoColumn (jakarta.persistence + hibernate)
+├── evo-persistence/                   ← JPA converters + auto column length (jakarta.persistence + hibernate)
 │   └── dev.cominotti.java.evo.persistence/
 │       ├── StringEvoConverter.java       ← abstract autoApply converter base
 │       ├── EmailConverter.java           ← @Converter(autoApply = true)
 │       ├── CpfConverter.java             ← @Converter(autoApply = true)
 │       ├── CnpjConverter.java            ← @Converter(autoApply = true)
 │       ├── CpfOrCnpjConverter.java       ← @Converter (NOT autoApply — sealed interface conflict)
-│       ├── EvoColumn.java                ← unified @AttributeBinderType annotation for all EVO types
-│       └── EvoColumnBinder.java          ← derives length from @Size(max) or uses explicit length
+│       └── EvoColumnMetadataIntegrator.java ← Hibernate Integrator — auto-derives column length from @Size(max)
 ├── evo-jackson/                       ← EvoModule for flat-string JSON ser/des (jackson + optional spring-context)
 │   └── dev.cominotti.java.evo.jackson/
 │       ├── EvoModule.java                ← Jackson 3.0 Module (auto-registered @Component)
@@ -71,14 +70,14 @@ java-evo/                              ← multi-module Maven root
 
 **Key design decisions:**
 - Java Records with `@EvoType` marker — **no** `@Embeddable` or `@Column`
-- **Persistence decoupled**: `autoApply` converters handle type mapping; unified `@EvoColumn` with `@AttributeBinderType` handles column metadata (name, length, nullable)
-- **Column length derived or explicit**: `EvoColumnBinder.deriveLengthFromEvoType()` reads `@Size(max)` from the EVO type's `value` field via reflection; for types without `@Size` (e.g., `Cpf`, `Cnpj`), length is specified explicitly via `@EvoColumn(length = ...)`
+- **Persistence decoupled**: `autoApply` converters handle type mapping; `EvoColumnMetadataIntegrator` auto-derives column lengths from `@Size(max)` on EVO types
+- **Column length auto-derived**: `EvoColumnMetadataIntegrator` reads `@Size(max)` from the EVO type's `value` field — if `@Column(length)` is still the JPA default (255), it overrides with the derived value. For types without `@Size` (e.g., `Cpf`, `Cnpj`), use `@Column(length = ...)` explicitly
 - **Single validation path**: compact constructor calls `EvoValidation.validate()` which uses `Validator.validateValue()` to evaluate all annotations (built-in + custom)
 - **`*Rules` classes** hold regexes, resource bundle keys (`"{evo.cpf.blank}"`), and algorithmic methods — shared between annotations and referenced by custom `ConstraintValidator`s
 - **i18n-ready**: all messages in `ValidationMessages.properties`, resolved via Jakarta Validation interpolation or `EvoMessages.resolve()` for non-annotation paths
 - **Custom constraint annotations** (`@NotAllSameDigit`, `@CpfCheckDigit`, `@CnpjCheckDigit`) with nested validator classes that delegate to `*Rules`
 - **Jackson 3.0** flat-string serialization via generic `ValueSerializerModifier` — any `@EvoType` record with a single `String` component auto-serializes as a bare JSON string
-- Column defaults are **NOT NULL** (`nullable = false`) — use `@EvoColumn(nullable = true)` for optional fields
+- Column nullability follows standard JPA `@Column` default (`nullable = true`) — use `@Column(nullable = false)` for required fields
 
 ## Creating a New EVO Type
 
@@ -174,19 +173,23 @@ public class PhoneConverter extends StringEvoConverter<Phone> {
 }
 ```
 
-### Step 5: Use @EvoColumn on entity fields in the consumer project (no new annotation needed)
+### Step 5: Use standard @Column on entity fields
 
-No new annotation or binder is required. The unified `@EvoColumn` + `EvoColumnBinder` handles
-all EVO types. If the EVO type has `@Size(max=N)` on its `value` field, length is derived
-automatically. Otherwise, specify `length` explicitly:
+Use standard JPA `@Column` — the `EvoColumnMetadataIntegrator` auto-derives column length
+from `@Size(max)` on the EVO type's `value` field when the column length is the JPA default (255).
+For types without `@Size`, specify `length` explicitly:
 
 ```java
-// If PhoneRules defines @Size(max = MAX_LENGTH) on Phone.value:
-@EvoColumn(name = "phone")                             // length derived from @Size(max)
+// If Phone has @Size(max = MAX_LENGTH) on its value field:
+@Column(name = "phone")                                // length auto-derived from @Size(max)
 private Phone phone;
 
 // If Phone does NOT have @Size, specify length explicitly:
-@EvoColumn(name = "phone", length = PhoneRules.MAX_LENGTH)
+@Column(name = "phone", length = PhoneRules.MAX_LENGTH)
+private Phone phone;
+
+// For required fields (JPA defaults to nullable = true):
+@Column(name = "phone", length = PhoneRules.MAX_LENGTH, nullable = false)
 private Phone phone;
 ```
 
@@ -196,7 +199,7 @@ Follow the existing test patterns across modules:
 - **Unit test** in `evo-core` (`PhoneTest.java`): valid/invalid construction, `parse()`, equality, toString
 - **Converter unit test** in `evo-persistence` (add to `ConverterUnitTest.java`): round-trip, null handling
 - **Validation test** in `evo-core` (add to `EvoValidationTest.java`): verify annotations exist
-- **Persistence test** in `evo-spring-example` (add to `EvoPersistenceIntegrationTest.java`): use `@EvoColumn` on entity, save/reload
+- **Persistence test** in `evo-spring-example` (add to `EvoPersistenceIntegrationTest.java`): use `@Column` on entity, save/reload
 - **Column metadata test** in `evo-spring-example` (add to `AttributeOverrideColumnInheritanceTest.java`): verify column length via `INFORMATION_SCHEMA`
 
 ## Configuring Column Names and Constraints
@@ -204,55 +207,55 @@ Follow the existing test patterns across modules:
 ### With @Size-derived length (e.g., Email has @Size(max=320))
 
 ```java
-@EvoColumn(name = "phone", length = PhoneRules.MAX_LENGTH)   // explicit length=11, NOT NULL (default)
-private Phone phone;
+// Length auto-derived from @Size(max=320) — nullable by default (JPA standard)
+@Column(name = "email")
+private Email email;
 
-@EvoColumn(name = "phone", length = PhoneRules.MAX_LENGTH, nullable = true)  // optional field
-private Phone optionalPhone;
+// Override column name — length still auto-derived from @Size(max)
+@Column(name = "work_email")
+private Email workEmail;
+
+// Required field — explicit nullable = false
+@Column(name = "email", nullable = false)
+private Email email;
 ```
 
 ### With explicit length (types without @Size)
 
 ```java
-// Length derived from @Size(max=320) on Email.value — NOT NULL by default
-@EvoColumn(name = "email")
-private Email email;
-
-// Override column name — length still derived from @Size(max)
-@EvoColumn(name = "work_email")
-private Email workEmail;
-
-// Optional field — explicit nullable = true
-@EvoColumn(name = "secondary_email", nullable = true)
-private Email secondaryEmail;
-
-// Explicit length for types without @Size
-@EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT)
+// Explicit length for types without @Size (e.g., Cpf uses @Pattern, not @Size)
+@Column(name = "author_cpf", length = CpfRules.DIGIT_COUNT)
 private Cpf authorCpf;
+
+// Required field with explicit length
+@Column(name = "phone", length = PhoneRules.MAX_LENGTH, nullable = false)
+private Phone phone;
 ```
 
 ## Using EVOs in JPA Entities
 
-### Single-type fields (use @EvoColumn + autoApply converter)
+### Single-type fields (standard @Column + autoApply converter)
 
 ```java
-@EvoColumn(name = "email")                                      // length derived from @Size(max=320)
+@Column(name = "email")                                         // length auto-derived from @Size(max=320)
 private Email email;
 
-@EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT)  // explicit length=11
+@Column(name = "author_cpf", length = CpfRules.DIGIT_COUNT)    // explicit length=11
 private Cpf authorCpf;
 ```
 
 No `@Convert` needed — `autoApply = true` converters handle it automatically.
+Column length is auto-derived by `EvoColumnMetadataIntegrator` for types with `@Size(max)`.
 
-### Union-type fields (use @EvoColumn + explicit @Convert)
+### Union-type fields (standard @Column + explicit @Convert)
 
 For sealed interface types like `CpfOrCnpj`, explicit `@Convert` is required because
 `autoApply` on the interface converter conflicts with subtype converters. Explicit `length` is
-also required since `deriveLengthFromEvoType()` reads `@Size` from concrete types only:
+also required since `EvoColumnMetadataIntegrator` only reads `@Size` from single-String
+`@EvoType` records, not from sealed interfaces:
 
 ```java
-@EvoColumn(name = "tax_id", length = CnpjRules.DIGIT_COUNT)
+@Column(name = "tax_id", length = CnpjRules.DIGIT_COUNT)
 @Convert(converter = CpfOrCnpjConverter.class)
 private CpfOrCnpj taxId;
 ```
@@ -414,8 +417,8 @@ class EvoPersistenceIntegrationTest {
 - **Jackson 3.0** (Spring Boot 4): packages are `tools.jackson.*`, NOT `com.fasterxml.jackson.*`
 - **JSON-B 3.0.1**: no `handles()` on `JsonbSerializer` — per-type adapter classes required (type erasure)
 - **Jersey 4**: `AbstractBinder` at `org.glassfish.jersey.inject.hk2.AbstractBinder`; wraps `JsonbException` in `ProcessingException`
-- **Hibernate 7.2.4**: `@AttributeBinderType` + `autoApply` converters compose correctly (verified)
-- Column defaults are **NOT NULL** — use `@EvoColumn(nullable = true)` for optional fields
+- **Hibernate 7.2.4**: `EvoColumnMetadataIntegrator` + `autoApply` converters compose correctly (verified)
+- Column nullability follows standard JPA `@Column` default (`nullable = true`) — use `@Column(nullable = false)` for required fields
 - `CpfOrCnpjConverter` must use explicit `@Convert`, NOT `autoApply = true`
 - Standalone JPA needs converters listed in `persistence.xml` `<class>` elements (no classpath scanning without Spring)
 - Without `spring-boot-starter-parent`, add `<maven.compiler.parameters>true</maven.compiler.parameters>` to root POM

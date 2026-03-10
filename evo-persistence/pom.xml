@@ -12,7 +12,7 @@
 
     <artifactId>evo-persistence</artifactId>
     <name>evo-persistence</name>
-    <description>Enterprise Value Objects — JPA converters and @EvoColumn annotation</description>
+    <description>Enterprise Value Objects — JPA converters and automatic column length derivation</description>
 
     <dependencies>
         <dependency>
