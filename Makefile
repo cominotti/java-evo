@@ -11,7 +11,7 @@ help:
 	@echo "  license-fix    Maven profile to auto-apply missing Apache-2.0 SPDX headers"
 	@echo "  verify         Run Maven verify (compile + test + integration checks)"
 	@echo "  test           Run Maven test (compile + unit tests only)"
-	@echo "  sonar-local    Run local SonarCloud analysis and print unresolved issues (requires SONAR_TOKEN env var)"
+	@echo "  sonar-local    Fetch SonarCloud quality gate and unresolved issues via REST API"
 
 license-check:
 	mvn -B -ntp validate
