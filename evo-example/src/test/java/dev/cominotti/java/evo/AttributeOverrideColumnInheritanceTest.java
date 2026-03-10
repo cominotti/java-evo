@@ -51,14 +51,16 @@ class AttributeOverrideColumnInheritanceTest {
     }
 
     @Test
-    void allEvoColumnsAreNullableByDefault() {
+    void explicitlyNullableColumnsAllowNull() {
+        // Greeting marks all EVO fields as nullable = true (they are optional in this example).
+        // @EvoColumn defaults to NOT NULL, so nullable = true must be explicit.
         for (var col : new String[]{"EMAIL", "AUTHOR_CPF", "COMPANY_CNPJ", "TAX_ID"}) {
             var nullable = jdbc.queryForObject(
                     "SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS "
                             + "WHERE TABLE_NAME = 'GREETING' AND COLUMN_NAME = ?",
                     String.class, col);
             assertThat(nullable)
-                    .as("Column %s should be nullable", col)
+                    .as("Column %s should be nullable (explicit nullable = true)", col)
                     .isEqualTo("YES");
         }
     }

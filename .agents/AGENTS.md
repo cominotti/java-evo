@@ -27,7 +27,7 @@ All commands run from the project root and build all modules. Use `-pl <module>`
 
 ### EVO Pattern Summary
 
-EVOs are records with a single `String value` component annotated with Jakarta Validation constraints. They carry `@EvoType` as a marker but **no** `@Embeddable` or `@Column`. Compact constructors delegate to `EvoValidation.validate()` which uses Jakarta Validation's `validateValue()` to evaluate all annotations — including custom constraints like `@NotAllSameDigit`, `@CpfCheckDigit`, `@CnpjCheckDigit`. Jackson flat-string serialization is handled by the generic `EvoModule` (detects `@EvoType` records).
+EVOs are records with a single `String value` component annotated with Jakarta Validation constraints. They carry `@EvoType` as a marker but **no** `@Embeddable` or `@Column`. Compact constructors delegate to `EvoValidation.validate()` which uses Jakarta Validation's `validateValue()` to evaluate all annotations — including custom constraints like `@NotAllSameDigit`, `@CpfCheckDigit`, `@CnpjCheckDigit`. Jackson flat-string serialization is handled by the generic `EvoModule` (detects `@EvoType` records). **EVOs are self-validating** — `@Valid` on EVO fields is unnecessary (the compact constructor validates before the object exists; during Jackson deserialization, invalid values are rejected immediately as `MismatchedInputException`).
 
 **Persistence architecture** (`evo-persistence`):
 - `StringEvoConverter<T>` is the abstract base for `autoApply` JPA converters
@@ -45,7 +45,13 @@ EVOs are records with a single `String value` component annotated with Jakarta V
 
 **Sealed interface for union types:** `CpfOrCnpj` is a `sealed interface permits Cpf, Cnpj` persisted via `@EvoColumn(name = "tax_id", length = CnpjRules.DIGIT_COUNT)` + explicit `@Convert(converter = CpfOrCnpjConverter.class)`. The converter must NOT be `autoApply = true` — Hibernate 7 throws "Multiple auto-apply converters matched" when both a supertype and subtype converter have `autoApply = true`. Sealed interfaces also need explicit `length` because `deriveLengthFromEvoType()` reads `@Size` from concrete types only.
 
-**Column nullability:** `@EvoColumn` annotation defaults are **nullable** (`nullable = true`). Entities control NOT NULL via `@EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT, nullable = false)`.
+**Column nullability:** `@EvoColumn` defaults to **NOT NULL** (`nullable = false`) because most DDD value objects are required. Use `@EvoColumn(name = "email", nullable = true)` for optional fields.
+
+**Error handling architecture** (`evo-example`):
+- `EvoExceptionHandler` (`@RestControllerAdvice`) unifies validation errors into RFC 9457 `ProblemDetail` responses with a consistent `"errors"` array of `{field, message}` entries
+- EVO deserialization errors: `SingleValueEvoDeserializer` and `CpfOrCnpjDeserializer` chain the original `IllegalArgumentException` as the cause of `MismatchedInputException` via `initCause()`. The handler extracts the field name from `MismatchedInputException.getPath()` and the i18n message from the chained IAE
+- Jakarta Validation errors (`MethodArgumentNotValidException`): the same handler maps field errors into the same `ProblemDetail` structure
+- Jackson annotations like `@JsonProperty` on EVO fields in DTOs work correctly — property renaming is handled at the container level, independent of `SingleValueEvoDeserializer`
 
 ## Jackson 3.0 (Critical)
 

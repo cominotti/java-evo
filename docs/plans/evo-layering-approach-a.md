@@ -223,7 +223,7 @@ EVO types:
 public @interface EvoColumn {
     String name();
     int length() default -1;       // -1 = derive from @Size(max) on the EVO type
-    boolean nullable() default true;
+    boolean nullable() default false;
 }
 
 // Binder — derives length from @Size(max) on the EVO type's value field via reflection,
@@ -259,15 +259,12 @@ The binder sets column metadata. Both compose on the same entity field.
 public class Greeting {
 
     @EvoColumn(name = "email")                        // length derived from @Size(max=320) on Email
-    @Valid
     private Email email;
 
     @EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT)  // explicit length=11
-    @Valid
     private Cpf authorCpf;
 
     @EvoColumn(name = "company_cnpj", length = CnpjRules.DIGIT_COUNT)  // explicit length=14
-    @Valid
     private Cnpj companyCnpj;
 
     @EvoColumn(name = "tax_id", length = CnpjRules.DIGIT_COUNT)     // explicit length=14

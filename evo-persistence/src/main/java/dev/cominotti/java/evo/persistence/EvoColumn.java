@@ -56,6 +56,12 @@ public @interface EvoColumn {
      */
     int length() default -1;
 
-    /** Whether the column allows NULL. Default: {@code true}. */
-    boolean nullable() default true;
+    /**
+     * Whether the column allows NULL. Default: {@code false} (NOT NULL).
+     *
+     * <p>Most DDD value objects are required parts of an entity's invariants,
+     * so NOT NULL is the safe default. Set {@code nullable = true} explicitly
+     * for optional EVO fields.</p>
+     */
+    boolean nullable() default false;
 }

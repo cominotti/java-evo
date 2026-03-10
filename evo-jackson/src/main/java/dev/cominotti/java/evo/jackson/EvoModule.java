@@ -42,7 +42,12 @@ public class EvoModule extends SimpleModule {
             try {
                 return CpfOrCnpj.of(value);
             } catch (IllegalArgumentException e) {
-                throw ctxt.weirdStringException(value, CpfOrCnpj.class, e.getMessage());
+                // Chain the original IAE as the cause so that downstream error
+                // handlers (e.g., a @ControllerAdvice) can extract the EVO
+                // validation message without parsing the MismatchedInputException text.
+                var ex = ctxt.weirdStringException(value, CpfOrCnpj.class, e.getMessage());
+                ex.initCause(e);
+                throw ex;
             }
         }
     }

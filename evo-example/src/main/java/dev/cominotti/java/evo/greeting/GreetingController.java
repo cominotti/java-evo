@@ -31,6 +31,7 @@ public class GreetingController {
     @PostMapping("/greetings")
     public Greeting createGreeting(@Valid @RequestBody GreetingRequest request) {
         var greeting = new Greeting(request.name(), request.message());
+        greeting.setEmail(request.email());
         return repository.save(greeting);
     }
 

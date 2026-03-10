@@ -1,5 +1,6 @@
 package dev.cominotti.java.evo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.cominotti.java.evo.greeting.Greeting;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,5 +65,62 @@ class EvoControllerIntegrationTest {
 
         CpfOrCnpj cnpj = objectMapper.readValue("\"" + VALID_CNPJ + "\"", CpfOrCnpj.class);
         assertThat(cnpj).isInstanceOf(Cnpj.class);
+    }
+
+    // --- @JsonProperty on EVO fields in view objects ---
+
+    /**
+     * Test-local record that uses {@code @JsonProperty} to customize the JSON name
+     * of an EVO field. Verifies that Jackson annotations compose correctly with
+     * {@code SingleValueEvoDeserializer} flat-string handling.
+     */
+    record CustomNameRequest(
+            String name,
+            @JsonProperty("contact_email") Email email,
+            @JsonProperty("tax_id") CpfOrCnpj taxId
+    ) {}
+
+    @Test
+    void evoFieldWithJsonPropertyDeserializesFromCustomName() {
+        var json = """
+                {"name": "Alice", "contact_email": "alice@example.com"}
+                """;
+        var result = objectMapper.readValue(json, CustomNameRequest.class);
+        assertThat(result.email().value()).isEqualTo("alice@example.com");
+    }
+
+    @Test
+    void evoFieldWithJsonPropertySerializesWithCustomName() {
+        var request = new CustomNameRequest("Alice", new Email("alice@example.com"), null);
+        var json = objectMapper.writeValueAsString(request);
+        assertThat(json).contains("\"contact_email\":\"alice@example.com\"");
+        assertThat(json).doesNotContain("\"email\":");
+    }
+
+    @Test
+    void evoFieldWithJsonPropertyIgnoresOriginalName() {
+        var json = """
+                {"name": "Alice", "email": "alice@example.com"}
+                """;
+        var result = objectMapper.readValue(json, CustomNameRequest.class);
+        assertThat(result.email()).isNull();
+    }
+
+    @Test
+    void cpfOrCnpjFieldWithJsonPropertyDeserializesFromCustomName() {
+        var json = """
+                {"name": "Bob", "tax_id": "%s"}
+                """.formatted(VALID_CPF);
+        var result = objectMapper.readValue(json, CustomNameRequest.class);
+        assertThat(result.taxId()).isInstanceOf(Cpf.class);
+        assertThat(result.taxId().value()).isEqualTo(VALID_CPF);
+    }
+
+    @Test
+    void nullEvoFieldWithJsonPropertySerializesAsNull() {
+        var request = new CustomNameRequest("Alice", null, null);
+        var json = objectMapper.writeValueAsString(request);
+        assertThat(json).contains("\"contact_email\":null");
+        assertThat(json).contains("\"tax_id\":null");
     }
 }

@@ -59,7 +59,12 @@ class SingleValueEvoDeserializer extends ValueDeserializerModifier {
                 return (Record) canonicalConstructor.newInstance(value);
             } catch (ReflectiveOperationException e) {
                 if (e.getCause() instanceof IllegalArgumentException iae) {
-                    throw ctxt.weirdStringException(value, handledType(), iae.getMessage());
+                    // Chain the original IAE as the cause so that downstream error
+                    // handlers (e.g., a @ControllerAdvice) can extract the EVO
+                    // validation message without parsing the MismatchedInputException text.
+                    var ex = ctxt.weirdStringException(value, handledType(), iae.getMessage());
+                    ex.initCause(iae);
+                    throw ex;
                 }
                 throw ctxt.weirdStringException(value, handledType(),
                         "Failed to construct " + handledType().getSimpleName() + ": " + e.getMessage());

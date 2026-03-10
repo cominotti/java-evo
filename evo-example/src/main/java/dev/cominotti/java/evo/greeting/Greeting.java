@@ -15,7 +15,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.validation.Valid;
+
 
 @Entity
 public class Greeting {
@@ -30,19 +30,16 @@ public class Greeting {
 
     private LocalDateTime createdAt;
 
-    @EvoColumn(name = "email")
-    @Valid
+    @EvoColumn(name = "email", nullable = true)
     private Email email;
 
-    @EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT)
-    @Valid
+    @EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT, nullable = true)
     private Cpf authorCpf;
 
-    @EvoColumn(name = "company_cnpj", length = CnpjRules.DIGIT_COUNT)
-    @Valid
+    @EvoColumn(name = "company_cnpj", length = CnpjRules.DIGIT_COUNT, nullable = true)
     private Cnpj companyCnpj;
 
-    @EvoColumn(name = "tax_id", length = CnpjRules.DIGIT_COUNT)
+    @EvoColumn(name = "tax_id", length = CnpjRules.DIGIT_COUNT, nullable = true)
     @Convert(converter = CpfOrCnpjConverter.class)
     private CpfOrCnpj taxId;
 

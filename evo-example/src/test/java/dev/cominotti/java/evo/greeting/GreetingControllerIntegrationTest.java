@@ -49,13 +49,16 @@ class GreetingControllerIntegrationTest {
     }
 
     @Test
-    void postInvalidGreetingReturnsBadRequest() throws Exception {
+    void postInvalidGreetingReturnsBadRequestWithFieldErrors() throws Exception {
         mockMvc.perform(post("/greetings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {"name": "", "message": ""}
                                 """))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Validation failed"))
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors.length()").value(2));
     }
 
     @Test
@@ -74,6 +77,75 @@ class GreetingControllerIntegrationTest {
     }
 
     @Test
+    void postGreetingWithValidEmailReturnsEmailInResponse() throws Exception {
+        mockMvc.perform(post("/greetings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Carol", "message": "Hi!", "email": "carol@example.com"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").value("carol@example.com"));
+    }
+
+    @Test
+    void postGreetingWithoutEmailIsAccepted() throws Exception {
+        mockMvc.perform(post("/greetings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Dave", "message": "Hi!"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").doesNotExist());
+    }
+
+    @Test
+    void postGreetingWithExplicitNullEmailIsAccepted() throws Exception {
+        mockMvc.perform(post("/greetings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Frank", "message": "Hi!", "email": null}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").doesNotExist());
+    }
+
+    @Test
+    void postGreetingWithInvalidEmailReturnsBadRequestWithEvoMessage() throws Exception {
+        mockMvc.perform(post("/greetings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Eve", "message": "Hi!", "email": "not-an-email"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Validation failed"))
+                .andExpect(jsonPath("$.errors").isArray())
+                .andExpect(jsonPath("$.errors.length()").value(1))
+                .andExpect(jsonPath("$.errors[0].field").value("email"))
+                .andExpect(jsonPath("$.errors[0].message").isNotEmpty());
+    }
+
+    @Test
+    void postGreetingWithEmptyEmailReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/greetings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "Grace", "message": "Hi!", "email": ""}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Validation failed"))
+                .andExpect(jsonPath("$.errors[0].field").value("email"))
+                .andExpect(jsonPath("$.errors[0].message").isNotEmpty());
+    }
+
+    @Test
+    void malformedJsonReturnsBadRequest() throws Exception {
+        mockMvc.perform(post("/greetings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("not json at all"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
     void fullRoundTrip() throws Exception {
         mockMvc.perform(post("/greetings")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -85,5 +157,53 @@ class GreetingControllerIntegrationTest {
         mockMvc.perform(get("/greetings"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.name == 'Roundtrip' && @.message == 'End-to-end test')]").exists());
+    }
+
+    @Test
+    void invalidEvoInNestedObjectReportsFieldWithDottedPath() throws Exception {
+        mockMvc.perform(post("/greetings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "A", "message": "B", "contact": {"workEmail": "bad"}}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Validation failed"))
+                .andExpect(jsonPath("$.errors[0].field").value("contact.workEmail"));
+    }
+
+    @Test
+    void invalidEvoInDeeplyNestedObjectReportsFullDottedPath() throws Exception {
+        mockMvc.perform(post("/greetings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "A", "message": "B", "contact": {"address": {"confirmationEmail": "bad"}}}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Validation failed"))
+                .andExpect(jsonPath("$.errors[0].field").value("contact.address.confirmationEmail"));
+    }
+
+    @Test
+    void nullNestedContactIsAccepted() throws Exception {
+        mockMvc.perform(post("/greetings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "A", "message": "B"}
+                                """))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void fullRoundTripWithEvoField() throws Exception {
+        mockMvc.perform(post("/greetings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": "EvoTrip", "message": "Round-trip with email", "email": "evo@example.com"}
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/greetings"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.name == 'EvoTrip')].email").value("evo@example.com"));
     }
 }

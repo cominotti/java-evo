@@ -64,7 +64,7 @@ java-evo/                              ← multi-module Maven root
 - **i18n-ready**: all messages in `ValidationMessages.properties`, resolved via Jakarta Validation interpolation or `EvoMessages.resolve()` for non-annotation paths
 - **Custom constraint annotations** (`@NotAllSameDigit`, `@CpfCheckDigit`, `@CnpjCheckDigit`) with nested validator classes that delegate to `*Rules`
 - **Jackson 3.0** flat-string serialization via generic `ValueSerializerModifier` — any `@EvoType` record with a single `String` component auto-serializes as a bare JSON string
-- Column defaults are **nullable** — entities control NOT NULL via `@EvoColumn(nullable = false)`
+- Column defaults are **NOT NULL** (`nullable = false`) — use `@EvoColumn(nullable = true)` for optional fields
 
 ## Creating a New EVO Type
 
@@ -171,31 +171,30 @@ Follow the existing test patterns across modules:
 ### With @Size-derived length (e.g., Email has @Size(max=320))
 
 ```java
-@EvoColumn(name = "phone", length = PhoneRules.MAX_LENGTH)   // explicit length=11, nullable=true
+@EvoColumn(name = "phone", length = PhoneRules.MAX_LENGTH)   // explicit length=11, NOT NULL (default)
 private Phone phone;
+
+@EvoColumn(name = "phone", length = PhoneRules.MAX_LENGTH, nullable = true)  // optional field
+private Phone optionalPhone;
 ```
 
 ### With explicit length (types without @Size)
 
 ```java
-// Length derived from @Size(max=320) on Email.value
+// Length derived from @Size(max=320) on Email.value — NOT NULL by default
 @EvoColumn(name = "email")
-@Valid
 private Email email;
 
 // Override column name — length still derived from @Size(max)
 @EvoColumn(name = "work_email")
-@Valid
 private Email workEmail;
 
-// Override column name AND add NOT NULL constraint
-@EvoColumn(name = "primary_email", nullable = false)
-@Valid
-private Email primaryEmail;
+// Optional field — explicit nullable = true
+@EvoColumn(name = "secondary_email", nullable = true)
+private Email secondaryEmail;
 
 // Explicit length for types without @Size
-@EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT, nullable = false)
-@Valid
+@EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT)
 private Cpf authorCpf;
 ```
 
@@ -205,11 +204,9 @@ private Cpf authorCpf;
 
 ```java
 @EvoColumn(name = "email")                                      // length derived from @Size(max=320)
-@Valid
 private Email email;
 
 @EvoColumn(name = "author_cpf", length = CpfRules.DIGIT_COUNT)  // explicit length=11
-@Valid
 private Cpf authorCpf;
 ```
 
@@ -236,10 +233,52 @@ private CpfOrCnpj taxId;
 ```java
 public record CreateUserRequest(
     @NotBlank String name,
-    @Valid Email email,         // validates Email annotations via cascading
-    @Valid CpfOrCnpj taxId     // auto-detects CPF/CNPJ from JSON string
+    Email email,         // self-validates in constructor — no @Valid needed
+    CpfOrCnpj taxId     // auto-detects CPF/CNPJ from JSON string
 ) {}
 ```
+
+**No `@Valid` on EVO fields:** EVOs are self-validating — their compact constructors call
+`EvoValidation.validate()`, so any EVO instance that exists is already valid. During Jackson
+deserialization, the constructor fires before Spring's `@Valid` cascading runs, rejecting invalid
+values immediately. `@Valid` on EVO fields would only re-validate already-valid objects.
+
+**`@JsonProperty` works on EVO fields:** Jackson annotations like `@JsonProperty("custom_name")`
+on EVO record components work correctly — property renaming is handled at the container (DTO)
+level, independent of `SingleValueEvoDeserializer`:
+
+```java
+public record CreateUserRequest(
+    @NotBlank String name,
+    @JsonProperty("contact_email") Email email   // JSON uses "contact_email"
+) {}
+```
+
+### Error handling
+
+EVO deserialization errors and Jakarta Validation errors are unified into RFC 9457 `ProblemDetail`
+responses by `EvoExceptionHandler` (`@RestControllerAdvice` in `evo-example`):
+
+```json
+{
+  "title": "Validation failed",
+  "status": 400,
+  "detail": "Request validation failed with 1 error(s).",
+  "errors": [
+    {"field": "email", "message": "Email must be a valid email address"}
+  ]
+}
+```
+
+Both `SingleValueEvoDeserializer` and `CpfOrCnpjDeserializer` chain the original
+`IllegalArgumentException` as the cause of `MismatchedInputException` via `initCause()`.
+The handler extracts the field name from `MismatchedInputException.getPath()` (supports
+nested dotted paths like `contact.address.email`) and the i18n message from the chained IAE.
+
+**Null vs invalid EVO fields in DTOs:**
+- Missing or `null` EVO field → no constructor call, field is `null` (valid)
+- Invalid EVO value → constructor throws during deserialization → `ProblemDetail` error
+- For required EVO fields, add `@NotNull` on the DTO component (validated by `@Valid @RequestBody`)
 
 ### JSON format
 
@@ -341,7 +380,7 @@ class EvoPersistenceIntegrationTest {
 
 - **Jackson 3.0** (Spring Boot 4): packages are `tools.jackson.*`, NOT `com.fasterxml.jackson.*`
 - **Hibernate 7.2.4**: `@AttributeBinderType` + `autoApply` converters compose correctly (verified)
-- Column defaults should be **nullable** — use `@EvoColumn(nullable = false)` at entity level for NOT NULL
+- Column defaults are **NOT NULL** — use `@EvoColumn(nullable = true)` for optional fields
 - `CpfOrCnpjConverter` must use explicit `@Convert`, NOT `autoApply = true`
 - Without `spring-boot-starter-parent`, add `<maven.compiler.parameters>true</maven.compiler.parameters>` to root POM
 
