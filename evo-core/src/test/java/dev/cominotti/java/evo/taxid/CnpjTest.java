@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 package dev.cominotti.java.evo.taxid;
 
 import org.junit.jupiter.api.Test;

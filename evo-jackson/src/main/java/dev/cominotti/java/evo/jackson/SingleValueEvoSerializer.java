@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 package dev.cominotti.java.evo.jackson;
 
 import java.lang.reflect.RecordComponent;

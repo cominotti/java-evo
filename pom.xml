@@ -16,6 +16,8 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <maven.compiler.parameters>true</maven.compiler.parameters>
         <spring-boot.version>4.0.3</spring-boot.version>
+        <exec.maven.plugin.version>3.6.2</exec.maven.plugin.version>
+        <skip.spdx.license.check>false</skip.spdx.license.check>
         <sonar.maven.plugin.version>5.5.0.6356</sonar.maven.plugin.version>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>cominotti</sonar.organization>
@@ -62,6 +64,26 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>${exec.maven.plugin.version}</version>
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>spdx-license-check</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${skip.spdx.license.check}</skip>
+                            <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
+                            <executable>${maven.multiModuleProjectDirectory}/scripts/license/check-spdx.sh</executable>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
                 <version>${sonar.maven.plugin.version}</version>
@@ -78,4 +100,47 @@
         <module>evo-spring-example</module>
         <module>evo-jakarta-example</module>
     </modules>
+
+    <profiles>
+        <profile>
+            <id>license-fix</id>
+            <properties>
+                <skip.spdx.license.check>true</skip.spdx.license.check>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>${exec.maven.plugin.version}</version>
+                        <inherited>false</inherited>
+                        <executions>
+                            <execution>
+                                <id>spdx-license-fix</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
+                                    <executable>${maven.multiModuleProjectDirectory}/scripts/license/apply-spdx.sh</executable>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>spdx-license-check-after-fix</id>
+                                <phase>validate</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
+                                    <executable>${maven.multiModuleProjectDirectory}/scripts/license/check-spdx.sh</executable>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

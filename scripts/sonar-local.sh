@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: Apache-2.0
+
 # Run local SonarCloud analysis via Maven and print unresolved issues.
 #
 # Requires: mvn, curl, jq

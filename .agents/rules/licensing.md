@@ -2,7 +2,7 @@
 paths:
   - "**/*.java"
   - "**/*.sh"
-  - "linter-cli/src/main/dist/bin/java-evo-linter"
+  - "Makefile"
 ---
 
 # Licensing

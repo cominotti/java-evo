@@ -12,6 +12,9 @@ mvn test -pl evo-core                       # run tests in a single module
 mvn test -pl evo-core -Dtest=CpfTest        # single test class in a module
 mvn test -pl evo-core -Dtest=CpfTest#validCpfCreatesSuccessfully  # single test method
 mvn spring-boot:run -pl evo-spring-example   # start Spring MVC example (H2 console at localhost:8080/h2-console)
+make license-check                          # verify Apache-2.0 SPDX headers (runs mvn validate)
+make license-fix                            # auto-apply missing SPDX headers
+make sonar-local                            # SonarCloud analysis + quality gate + issue table (requires SONAR_TOKEN)
 ```
 
 ## Architecture
