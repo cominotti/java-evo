@@ -5,7 +5,19 @@ package dev.cominotti.java.evo;
 import java.lang.annotation.Annotation;
 import java.util.Set;
 
+import dev.cominotti.java.evo.country.CountryCode;
+import dev.cominotti.java.evo.country.CountryCodeRules;
+import dev.cominotti.java.evo.country.ValidCountryCode;
 import dev.cominotti.java.evo.email.Email;
+import dev.cominotti.java.evo.net.IpAddress;
+import dev.cominotti.java.evo.net.IpAddressRules;
+import dev.cominotti.java.evo.net.ValidIpAddress;
+import dev.cominotti.java.evo.phone.AreaCode;
+import dev.cominotti.java.evo.phone.AreaCodeRules;
+import dev.cominotti.java.evo.phone.PhoneNumber;
+import dev.cominotti.java.evo.phone.PhoneNumberRules;
+import dev.cominotti.java.evo.slug.Slug;
+import dev.cominotti.java.evo.slug.SlugRules;
 import dev.cominotti.java.evo.taxid.Cnpj;
 import dev.cominotti.java.evo.taxid.CnpjCheckDigit;
 import dev.cominotti.java.evo.taxid.CnpjRules;
@@ -14,6 +26,11 @@ import dev.cominotti.java.evo.taxid.CpfCheckDigit;
 import dev.cominotti.java.evo.taxid.CpfOrCnpj;
 import dev.cominotti.java.evo.taxid.CpfRules;
 import dev.cominotti.java.evo.taxid.NotAllSameDigit;
+import dev.cominotti.java.evo.url.Url;
+import dev.cominotti.java.evo.url.UrlRules;
+import dev.cominotti.java.evo.url.ValidUrl;
+import dev.cominotti.java.evo.username.Username;
+import dev.cominotti.java.evo.username.UsernameRules;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -130,12 +147,189 @@ class EvoValidationTest {
         assertThat(hasAnnotation(Cnpj.class, "value", CnpjCheckDigit.class)).isTrue();
     }
 
+    // --- Slug annotation metadata ---
+
+    @Test
+    void slugHasNotBlankAnnotation() {
+        assertThat(hasAnnotation(Slug.class, "value", NotBlank.class)).isTrue();
+    }
+
+    @Test
+    void slugHasPatternAnnotation() {
+        var pattern = getAnnotation(Slug.class, "value", Pattern.class);
+        assertThat(pattern).isNotNull();
+        assertThat(pattern.regexp()).isEqualTo(SlugRules.REGEX);
+    }
+
+    @Test
+    void slugHasSizeAnnotation() {
+        assertThat(hasAnnotation(Slug.class, "value", Size.class)).isTrue();
+    }
+
+    @Test
+    void validSlugHasNoViolations() {
+        var slug = new Slug("my-slug");
+        Set<ConstraintViolation<Slug>> violations = validator.validate(slug);
+        assertThat(violations).isEmpty();
+    }
+
+    // --- Username annotation metadata ---
+
+    @Test
+    void usernameHasNotBlankAnnotation() {
+        assertThat(hasAnnotation(Username.class, "value", NotBlank.class)).isTrue();
+    }
+
+    @Test
+    void usernameHasPatternAnnotation() {
+        var pattern = getAnnotation(Username.class, "value", Pattern.class);
+        assertThat(pattern).isNotNull();
+        assertThat(pattern.regexp()).isEqualTo(UsernameRules.REGEX);
+    }
+
+    @Test
+    void usernameHasSizeAnnotation() {
+        assertThat(hasAnnotation(Username.class, "value", Size.class)).isTrue();
+    }
+
+    @Test
+    void validUsernameHasNoViolations() {
+        var username = new Username("alice");
+        Set<ConstraintViolation<Username>> violations = validator.validate(username);
+        assertThat(violations).isEmpty();
+    }
+
+    // --- AreaCode annotation metadata ---
+
+    @Test
+    void areaCodeHasNotBlankAnnotation() {
+        assertThat(hasAnnotation(AreaCode.class, "value", NotBlank.class)).isTrue();
+    }
+
+    @Test
+    void areaCodeHasPatternAnnotation() {
+        var pattern = getAnnotation(AreaCode.class, "value", Pattern.class);
+        assertThat(pattern).isNotNull();
+        assertThat(pattern.regexp()).isEqualTo(AreaCodeRules.REGEX);
+    }
+
+    @Test
+    void validAreaCodeHasNoViolations() {
+        var areaCode = new AreaCode("11");
+        Set<ConstraintViolation<AreaCode>> violations = validator.validate(areaCode);
+        assertThat(violations).isEmpty();
+    }
+
+    // --- PhoneNumber annotation metadata ---
+
+    @Test
+    void phoneNumberHasNotBlankAnnotation() {
+        assertThat(hasAnnotation(PhoneNumber.class, "value", NotBlank.class)).isTrue();
+    }
+
+    @Test
+    void phoneNumberHasPatternAnnotation() {
+        var pattern = getAnnotation(PhoneNumber.class, "value", Pattern.class);
+        assertThat(pattern).isNotNull();
+        assertThat(pattern.regexp()).isEqualTo(PhoneNumberRules.REGEX);
+    }
+
+    @Test
+    void validPhoneNumberHasNoViolations() {
+        var phone = new PhoneNumber("+5511999887766");
+        Set<ConstraintViolation<PhoneNumber>> violations = validator.validate(phone);
+        assertThat(violations).isEmpty();
+    }
+
+    // --- CountryCode annotation metadata ---
+
+    @Test
+    void countryCodeHasNotBlankAnnotation() {
+        assertThat(hasAnnotation(CountryCode.class, "value", NotBlank.class)).isTrue();
+    }
+
+    @Test
+    void countryCodeHasPatternAnnotation() {
+        var pattern = getAnnotation(CountryCode.class, "value", Pattern.class);
+        assertThat(pattern).isNotNull();
+        assertThat(pattern.regexp()).isEqualTo(CountryCodeRules.REGEX);
+    }
+
+    @Test
+    void countryCodeHasValidCountryCodeAnnotation() {
+        assertThat(hasAnnotation(CountryCode.class, "value", ValidCountryCode.class)).isTrue();
+    }
+
+    @Test
+    void validCountryCodeHasNoViolations() {
+        var code = new CountryCode("BR");
+        Set<ConstraintViolation<CountryCode>> violations = validator.validate(code);
+        assertThat(violations).isEmpty();
+    }
+
+    // --- Url annotation metadata ---
+
+    @Test
+    void urlHasNotBlankAnnotation() {
+        assertThat(hasAnnotation(Url.class, "value", NotBlank.class)).isTrue();
+    }
+
+    @Test
+    void urlHasSizeAnnotation() {
+        assertThat(hasAnnotation(Url.class, "value", Size.class)).isTrue();
+    }
+
+    @Test
+    void urlHasValidUrlAnnotation() {
+        assertThat(hasAnnotation(Url.class, "value", ValidUrl.class)).isTrue();
+    }
+
+    @Test
+    void validUrlHasNoViolations() {
+        var url = new Url("https://example.com");
+        Set<ConstraintViolation<Url>> violations = validator.validate(url);
+        assertThat(violations).isEmpty();
+    }
+
+    // --- IpAddress annotation metadata ---
+
+    @Test
+    void ipAddressHasNotBlankAnnotation() {
+        assertThat(hasAnnotation(IpAddress.class, "value", NotBlank.class)).isTrue();
+    }
+
+    @Test
+    void ipAddressHasSizeAnnotation() {
+        assertThat(hasAnnotation(IpAddress.class, "value", Size.class)).isTrue();
+    }
+
+    @Test
+    void ipAddressHasValidIpAddressAnnotation() {
+        assertThat(hasAnnotation(IpAddress.class, "value", ValidIpAddress.class)).isTrue();
+    }
+
+    @Test
+    void validIpAddressHasNoViolations() {
+        var ip = new IpAddress("192.168.1.1");
+        Set<ConstraintViolation<IpAddress>> violations = validator.validate(ip);
+        assertThat(violations).isEmpty();
+    }
+
+    // --- @EvoType marker ---
+
     @Test
     void allEvoTypesAreMarkedAsEvoTypes() {
         assertThat(Email.class.isAnnotationPresent(EvoType.class)).isTrue();
         assertThat(Cpf.class.isAnnotationPresent(EvoType.class)).isTrue();
         assertThat(Cnpj.class.isAnnotationPresent(EvoType.class)).isTrue();
         assertThat(CpfOrCnpj.class.isAnnotationPresent(EvoType.class)).isTrue();
+        assertThat(Slug.class.isAnnotationPresent(EvoType.class)).isTrue();
+        assertThat(Username.class.isAnnotationPresent(EvoType.class)).isTrue();
+        assertThat(AreaCode.class.isAnnotationPresent(EvoType.class)).isTrue();
+        assertThat(PhoneNumber.class.isAnnotationPresent(EvoType.class)).isTrue();
+        assertThat(CountryCode.class.isAnnotationPresent(EvoType.class)).isTrue();
+        assertThat(Url.class.isAnnotationPresent(EvoType.class)).isTrue();
+        assertThat(IpAddress.class.isAnnotationPresent(EvoType.class)).isTrue();
     }
 
     private static boolean hasAnnotation(Class<? extends Record> recordClass,

@@ -36,6 +36,29 @@ java-evo/                              ← multi-module Maven root
 │       │   ├── NotAllSameDigit.java      ← @NotAllSameDigit + nested ConstraintValidator
 │       │   ├── CpfCheckDigit.java        ← @CpfCheckDigit + nested ConstraintValidator
 │       │   └── CnpjCheckDigit.java       ← @CnpjCheckDigit + nested ConstraintValidator
+│       ├── slug/
+│       │   ├── Slug.java                 ← URL-friendly identifier
+│       │   └── SlugRules.java            ← REGEX, MAX_LENGTH, messages
+│       ├── username/
+│       │   ├── Username.java             ← user identifier (GitHub convention)
+│       │   └── UsernameRules.java         ← REGEX, MIN/MAX_LENGTH, messages
+│       ├── phone/
+│       │   ├── PhoneNumber.java          ← E.164 format, has parse()
+│       │   ├── PhoneNumberRules.java      ← REGEX, MAX_LENGTH, messages
+│       │   ├── AreaCode.java             ← regional area code (1–5 digits)
+│       │   └── AreaCodeRules.java         ← REGEX, MAX_LENGTH, messages
+│       ├── country/
+│       │   ├── CountryCode.java          ← ISO 3166-1 alpha-2
+│       │   ├── CountryCodeRules.java      ← REGEX, ISO set cache, messages
+│       │   └── ValidCountryCode.java     ← @ValidCountryCode + nested ConstraintValidator
+│       ├── url/
+│       │   ├── Url.java                  ← web/API URL (any URI scheme)
+│       │   ├── UrlRules.java              ← MAX_LENGTH, messages
+│       │   └── ValidUrl.java             ← @ValidUrl + nested ConstraintValidator (URI parsing)
+│       ├── net/
+│       │   ├── IpAddress.java            ← IPv4/IPv6 address
+│       │   ├── IpAddressRules.java        ← MAX_LENGTH, isValidLiteral(), messages
+│       │   └── ValidIpAddress.java       ← @ValidIpAddress + nested ConstraintValidator
 │       └── validation/
 │           ├── EvoValidation.java        ← replaceable Validator holder + validate()
 │           └── EvoMessages.java          ← resource bundle resolver for direct-throw paths
@@ -411,10 +434,17 @@ class EvoPersistenceIntegrationTest {
 
 | Type | Package | Validation | Column Default | Notes |
 |---|---|---|---|---|
-| `Email` | `evo.email` | `@NotBlank @Email @Size(max=320)` — constants in `EmailRules` | `email VARCHAR(320)` | RFC 5321 max length |
-| `Cpf` | `evo.taxid` | `@NotBlank @Pattern @NotAllSameDigit @CpfCheckDigit` — constants in `CpfRules` | `cpf VARCHAR(11)` | Brazilian individual tax ID |
-| `Cnpj` | `evo.taxid` | `@NotBlank @Pattern @NotAllSameDigit @CnpjCheckDigit` — constants in `CnpjRules` | `cnpj VARCHAR(14)` | Brazilian company tax ID |
+| `Email` | `evo.email` | `@NotBlank @Email @Size(max=320)` — constants in `EmailRules` | `VARCHAR(320)` | RFC 5321 max length |
+| `Cpf` | `evo.taxid` | `@NotBlank @Pattern @NotAllSameDigit @CpfCheckDigit` — constants in `CpfRules` | `VARCHAR(11)` | Brazilian individual tax ID |
+| `Cnpj` | `evo.taxid` | `@NotBlank @Pattern @NotAllSameDigit @CnpjCheckDigit` — constants in `CnpjRules` | `VARCHAR(14)` | Brazilian company tax ID |
 | `CpfOrCnpj` | `evo.taxid` | Sealed interface — delegates to Cpf/Cnpj — messages in `TaxIdRules` | via `@Convert` | Union type with `of()` and `parse()` |
+| `Slug` | `evo.slug` | `@NotBlank @Pattern @Size(max=255)` — constants in `SlugRules` | `VARCHAR(255)` | URL-friendly identifier |
+| `Username` | `evo.username` | `@NotBlank @Size(min=3,max=39) @Pattern` — constants in `UsernameRules` | `VARCHAR(39)` | GitHub convention (letter + alphanum/hyphen/underscore) |
+| `AreaCode` | `evo.phone` | `@NotBlank @Pattern @Size(max=5)` — constants in `AreaCodeRules` | `VARCHAR(5)` | Regional area code (1–5 digits) |
+| `PhoneNumber` | `evo.phone` | `@NotBlank @Pattern @Size(max=16)` — constants in `PhoneNumberRules` | `VARCHAR(16)` | E.164 format (+digits), has `parse()` |
+| `CountryCode` | `evo.country` | `@NotBlank @Pattern @Size(max=2) @ValidCountryCode` — constants in `CountryCodeRules` | `VARCHAR(2)` | ISO 3166-1 alpha-2, validated against JDK list |
+| `Url` | `evo.url` | `@NotBlank @Size(max=2083) @ValidUrl` — constants in `UrlRules` | `VARCHAR(2083)` | Any URI scheme, validated via `java.net.URI` |
+| `IpAddress` | `evo.net` | `@NotBlank @Size(max=45) @ValidIpAddress` — constants in `IpAddressRules` | `VARCHAR(45)` | IPv4/IPv6, validated via `InetAddress.ofLiteral()` |
 
 ## Technical Constraints
 

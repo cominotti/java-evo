@@ -2,10 +2,17 @@
 
 package dev.cominotti.java.evo.jsonb;
 
+import dev.cominotti.java.evo.country.CountryCode;
 import dev.cominotti.java.evo.email.Email;
+import dev.cominotti.java.evo.net.IpAddress;
+import dev.cominotti.java.evo.phone.AreaCode;
+import dev.cominotti.java.evo.phone.PhoneNumber;
+import dev.cominotti.java.evo.slug.Slug;
 import dev.cominotti.java.evo.taxid.Cnpj;
 import dev.cominotti.java.evo.taxid.Cpf;
 import dev.cominotti.java.evo.taxid.CpfOrCnpj;
+import dev.cominotti.java.evo.url.Url;
+import dev.cominotti.java.evo.username.Username;
 import jakarta.json.bind.Jsonb;
 import jakarta.json.bind.JsonbBuilder;
 import jakarta.json.bind.JsonbConfig;
@@ -102,6 +109,104 @@ class EvoJsonbTest {
         CpfOrCnpj result = jsonb.fromJson("\"" + VALID_CNPJ + "\"", CpfOrCnpj.class);
         assertThat(result).isInstanceOf(Cnpj.class);
         assertThat(result.value()).isEqualTo(VALID_CNPJ);
+    }
+
+    // --- Slug serialization ---
+
+    @Test
+    void slugSerializesToFlatString() {
+        var slug = new Slug("my-slug");
+        assertThat(jsonb.toJson(slug)).isEqualTo("\"my-slug\"");
+    }
+
+    @Test
+    void slugDeserializesFromFlatString() {
+        var slug = jsonb.fromJson("\"my-slug\"", Slug.class);
+        assertThat(slug.value()).isEqualTo("my-slug");
+    }
+
+    // --- Username serialization ---
+
+    @Test
+    void usernameSerializesToFlatString() {
+        var username = new Username("alice");
+        assertThat(jsonb.toJson(username)).isEqualTo("\"alice\"");
+    }
+
+    @Test
+    void usernameDeserializesFromFlatString() {
+        var username = jsonb.fromJson("\"alice\"", Username.class);
+        assertThat(username.value()).isEqualTo("alice");
+    }
+
+    // --- AreaCode serialization ---
+
+    @Test
+    void areaCodeSerializesToFlatString() {
+        var areaCode = new AreaCode("11");
+        assertThat(jsonb.toJson(areaCode)).isEqualTo("\"11\"");
+    }
+
+    @Test
+    void areaCodeDeserializesFromFlatString() {
+        var areaCode = jsonb.fromJson("\"11\"", AreaCode.class);
+        assertThat(areaCode.value()).isEqualTo("11");
+    }
+
+    // --- PhoneNumber serialization ---
+
+    @Test
+    void phoneNumberSerializesToFlatString() {
+        var phone = new PhoneNumber("+5511999887766");
+        assertThat(jsonb.toJson(phone)).isEqualTo("\"+5511999887766\"");
+    }
+
+    @Test
+    void phoneNumberDeserializesFromFlatString() {
+        var phone = jsonb.fromJson("\"+5511999887766\"", PhoneNumber.class);
+        assertThat(phone.value()).isEqualTo("+5511999887766");
+    }
+
+    // --- CountryCode serialization ---
+
+    @Test
+    void countryCodeSerializesToFlatString() {
+        var code = new CountryCode("BR");
+        assertThat(jsonb.toJson(code)).isEqualTo("\"BR\"");
+    }
+
+    @Test
+    void countryCodeDeserializesFromFlatString() {
+        var code = jsonb.fromJson("\"BR\"", CountryCode.class);
+        assertThat(code.value()).isEqualTo("BR");
+    }
+
+    // --- Url serialization ---
+
+    @Test
+    void urlSerializesToFlatString() {
+        var url = new Url("https://example.com");
+        assertThat(jsonb.toJson(url)).isEqualTo("\"https://example.com\"");
+    }
+
+    @Test
+    void urlDeserializesFromFlatString() {
+        var url = jsonb.fromJson("\"https://example.com\"", Url.class);
+        assertThat(url.value()).isEqualTo("https://example.com");
+    }
+
+    // --- IpAddress serialization ---
+
+    @Test
+    void ipAddressSerializesToFlatString() {
+        var ip = new IpAddress("192.168.1.1");
+        assertThat(jsonb.toJson(ip)).isEqualTo("\"192.168.1.1\"");
+    }
+
+    @Test
+    void ipAddressDeserializesFromFlatString() {
+        var ip = jsonb.fromJson("\"192.168.1.1\"", IpAddress.class);
+        assertThat(ip.value()).isEqualTo("192.168.1.1");
     }
 
     // --- null handling ---

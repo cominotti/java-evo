@@ -21,7 +21,7 @@ make sonar-local                            # SonarCloud quality gate + issue ta
 
 Multi-module Maven project under `dev.cominotti.java.evo`:
 
-- **`evo-core`** — Domain EVOs (Java Records with `@EvoType`) and validation. Organized into subpackages: `email/` (Email + EmailRules), `taxid/` (Cpf, Cnpj, CpfOrCnpj + all tax ID rules and constraints), `validation/` (shared EvoValidation + EvoMessages). Shared infrastructure (`EvoType`, `EvoTypes`) stays in the root package. Dependencies: Jakarta Validation only. See the `/evo` skill for the full guide on creating and using EVOs.
+- **`evo-core`** — Domain EVOs (Java Records with `@EvoType`) and validation. Organized into subpackages: `email/` (Email), `taxid/` (Cpf, Cnpj, CpfOrCnpj + check digit constraints), `slug/` (Slug), `username/` (Username), `phone/` (PhoneNumber, AreaCode), `country/` (CountryCode + @ValidCountryCode), `url/` (Url + @ValidUrl), `net/` (IpAddress + @ValidIpAddress), `validation/` (shared EvoValidation + EvoMessages). Shared infrastructure (`EvoType`, `EvoTypes`) stays in the root package. Dependencies: Jakarta Validation only. See the `/evo` skill for the full guide on creating and using EVOs.
 - **`evo-persistence`** — JPA converters (`autoApply = true`, `StringEvoConverter<T>` base) and `EvoColumnMetadataIntegrator` (Hibernate `Integrator` that auto-derives column lengths from `@Size(max)` on EVO types). Dependencies: Jakarta Persistence + Hibernate.
 - **`evo-jackson`** — `EvoModule` for flat-string JSON serialization/deserialization of `@EvoType` records. Dependencies: Jackson + optional Spring Context (for `@Component` auto-registration).
 - **`evo-jsonb`** — `StringEvoJsonbAdapter<T>` for flat-string JSON-B serialization. Per-type adapters auto-discovered via `ServiceLoader` (`EvoJsonbAdapterProvider`). Dependencies: Jakarta JSON Binding.
@@ -37,15 +37,15 @@ EVOs are records with a single `String value` component annotated with Jakarta V
 
 **Persistence architecture** (`evo-persistence`):
 - `StringEvoConverter<T>` is the abstract base for `autoApply` JPA converters
-- Concrete converters (`EmailConverter`, `CpfConverter`, `CnpjConverter`) use `@Converter(autoApply = true)` — safe because EVOs are not `@Embeddable`
+- Concrete converters (e.g., `EmailConverter`, `CpfConverter`, `SlugConverter`, `PhoneNumberConverter`, `CountryCodeConverter`, `UrlConverter`, `IpAddressConverter`) use `@Converter(autoApply = true)` — safe because EVOs are not `@Embeddable`
 - `EvoColumnMetadataIntegrator` (Hibernate `Integrator`) auto-derives column length from `@Size(max)` on the EVO type's `value` field — override rule: if `@Column(length = N)` where N ≠ 255, the explicit value wins
 - Auto-discovered via `META-INF/services/org.hibernate.integrator.spi.Integrator` — zero configuration needed
 - Entity fields use standard `@Column(name = "email")` — length auto-derived from `@Size(max=320)`. For types without `@Size`, use `@Column(name = "cpf", length = 11)` explicitly
 
 **Validation architecture** (`evo-core`):
-- Each EVO type's `*Rules` class and custom constraints are co-located in the same subpackage as the EVO record: `email/EmailRules`, `taxid/CpfRules`, `taxid/CnpjRules`, `taxid/TaxIdRules`, etc.
-- `*Rules` classes hold regexes, **resource bundle keys** (`"{evo.cpf.blank}"`), and algorithmic methods
-- Custom constraint annotations (`taxid/NotAllSameDigit`, `taxid/CpfCheckDigit`, `taxid/CnpjCheckDigit`) have nested `ConstraintValidator` classes that delegate to `*Rules`
+- Each EVO type's `*Rules` class and custom constraints are co-located in the same subpackage as the EVO record: `email/EmailRules`, `taxid/CpfRules`, `country/CountryCodeRules`, `url/UrlRules`, `net/IpAddressRules`, etc.
+- `*Rules` classes hold regexes, **resource bundle keys** (`"{evo.cpf.blank}"`), algorithmic methods, and cached lookup sets (e.g., `CountryCodeRules` caches `Set.of(Locale.getISOCountries())`)
+- Custom constraint annotations (`taxid/NotAllSameDigit`, `taxid/CpfCheckDigit`, `country/ValidCountryCode`, `url/ValidUrl`, `net/ValidIpAddress`) have nested `ConstraintValidator` classes that delegate to `*Rules`
 - Shared infrastructure stays in `validation/`: `EvoValidation` caches a `Validator` instance (replaceable via `setValidatorFactory()`), `EvoMessages.resolve()` handles direct-throw paths (`parse()`, `CpfOrCnpj.of()`) using the same resource bundle
 - Messages live in `src/main/resources/ValidationMessages.properties` — i18n via locale-specific variants (`ValidationMessages_pt_BR.properties`, etc.)
 

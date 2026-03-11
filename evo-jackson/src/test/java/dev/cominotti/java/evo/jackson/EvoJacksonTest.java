@@ -2,10 +2,17 @@
 
 package dev.cominotti.java.evo.jackson;
 
+import dev.cominotti.java.evo.country.CountryCode;
 import dev.cominotti.java.evo.email.Email;
+import dev.cominotti.java.evo.net.IpAddress;
+import dev.cominotti.java.evo.phone.AreaCode;
+import dev.cominotti.java.evo.phone.PhoneNumber;
+import dev.cominotti.java.evo.slug.Slug;
 import dev.cominotti.java.evo.taxid.Cnpj;
 import dev.cominotti.java.evo.taxid.Cpf;
 import dev.cominotti.java.evo.taxid.CpfOrCnpj;
+import dev.cominotti.java.evo.url.Url;
+import dev.cominotti.java.evo.username.Username;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
@@ -123,6 +130,104 @@ class EvoJacksonTest {
     void invalidCpfDuringDeserializationThrows() {
         assertThatThrownBy(() -> mapper.readValue("\"12345\"", Cpf.class))
                 .isInstanceOf(Exception.class);
+    }
+
+    // --- Slug serialization ---
+
+    @Test
+    void slugSerializesToFlatString() throws Exception {
+        var slug = new Slug("my-slug");
+        assertThat(mapper.writeValueAsString(slug)).isEqualTo("\"my-slug\"");
+    }
+
+    @Test
+    void slugDeserializesFromFlatString() throws Exception {
+        var slug = mapper.readValue("\"my-slug\"", Slug.class);
+        assertThat(slug.value()).isEqualTo("my-slug");
+    }
+
+    // --- Username serialization ---
+
+    @Test
+    void usernameSerializesToFlatString() throws Exception {
+        var username = new Username("alice");
+        assertThat(mapper.writeValueAsString(username)).isEqualTo("\"alice\"");
+    }
+
+    @Test
+    void usernameDeserializesFromFlatString() throws Exception {
+        var username = mapper.readValue("\"alice\"", Username.class);
+        assertThat(username.value()).isEqualTo("alice");
+    }
+
+    // --- AreaCode serialization ---
+
+    @Test
+    void areaCodeSerializesToFlatString() throws Exception {
+        var areaCode = new AreaCode("11");
+        assertThat(mapper.writeValueAsString(areaCode)).isEqualTo("\"11\"");
+    }
+
+    @Test
+    void areaCodeDeserializesFromFlatString() throws Exception {
+        var areaCode = mapper.readValue("\"11\"", AreaCode.class);
+        assertThat(areaCode.value()).isEqualTo("11");
+    }
+
+    // --- PhoneNumber serialization ---
+
+    @Test
+    void phoneNumberSerializesToFlatString() throws Exception {
+        var phone = new PhoneNumber("+5511999887766");
+        assertThat(mapper.writeValueAsString(phone)).isEqualTo("\"+5511999887766\"");
+    }
+
+    @Test
+    void phoneNumberDeserializesFromFlatString() throws Exception {
+        var phone = mapper.readValue("\"+5511999887766\"", PhoneNumber.class);
+        assertThat(phone.value()).isEqualTo("+5511999887766");
+    }
+
+    // --- CountryCode serialization ---
+
+    @Test
+    void countryCodeSerializesToFlatString() throws Exception {
+        var code = new CountryCode("BR");
+        assertThat(mapper.writeValueAsString(code)).isEqualTo("\"BR\"");
+    }
+
+    @Test
+    void countryCodeDeserializesFromFlatString() throws Exception {
+        var code = mapper.readValue("\"BR\"", CountryCode.class);
+        assertThat(code.value()).isEqualTo("BR");
+    }
+
+    // --- Url serialization ---
+
+    @Test
+    void urlSerializesToFlatString() throws Exception {
+        var url = new Url("https://example.com");
+        assertThat(mapper.writeValueAsString(url)).isEqualTo("\"https://example.com\"");
+    }
+
+    @Test
+    void urlDeserializesFromFlatString() throws Exception {
+        var url = mapper.readValue("\"https://example.com\"", Url.class);
+        assertThat(url.value()).isEqualTo("https://example.com");
+    }
+
+    // --- IpAddress serialization ---
+
+    @Test
+    void ipAddressSerializesToFlatString() throws Exception {
+        var ip = new IpAddress("192.168.1.1");
+        assertThat(mapper.writeValueAsString(ip)).isEqualTo("\"192.168.1.1\"");
+    }
+
+    @Test
+    void ipAddressDeserializesFromFlatString() throws Exception {
+        var ip = mapper.readValue("\"192.168.1.1\"", IpAddress.class);
+        assertThat(ip.value()).isEqualTo("192.168.1.1");
     }
 
     // --- embedded in a DTO ---
