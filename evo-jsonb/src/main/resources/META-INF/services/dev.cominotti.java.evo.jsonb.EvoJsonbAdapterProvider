@@ -2,3 +2,10 @@ dev.cominotti.java.evo.jsonb.EmailJsonbAdapter
 dev.cominotti.java.evo.jsonb.CpfJsonbAdapter
 dev.cominotti.java.evo.jsonb.CnpjJsonbAdapter
 dev.cominotti.java.evo.jsonb.CpfOrCnpjJsonbAdapter
+dev.cominotti.java.evo.jsonb.SlugJsonbAdapter
+dev.cominotti.java.evo.jsonb.UsernameJsonbAdapter
+dev.cominotti.java.evo.jsonb.AreaCodeJsonbAdapter
+dev.cominotti.java.evo.jsonb.PhoneNumberJsonbAdapter
+dev.cominotti.java.evo.jsonb.CountryCodeJsonbAdapter
+dev.cominotti.java.evo.jsonb.UrlJsonbAdapter
+dev.cominotti.java.evo.jsonb.IpAddressJsonbAdapter
